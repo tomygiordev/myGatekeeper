@@ -1,0 +1,6 @@
+Nivel 4, cantidad de personas a atender: [7]
+1-Si es [DIPLOMATICO] y no tiene documentacion valida, no dejar pasar.
+2-Si es [REFUGIADO] y su motivo de viaje es [Conferencia], rechazar.
+3-Si su nacionalidad y/o residencia forma parte de los paises en guerra no dejar pasar.
+4-Puedes fallar [2] veces.
+Paises en guerra:[Chile],[Colombia],[Mexico],[Estados Unidos].

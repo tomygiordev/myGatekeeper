@@ -1,0 +1,5 @@
+Nivel 3, cantidad de personas a atender: [6]
+1-Si es menor de edad y viaja solo no dejar pasar.
+2-Si el tipo de persona es [REFUGIADO] y viaja solo, rechazar.
+3-Si el tipo de viaje es [Estudios] y la duracion es menor a [4] semanas rechazar.
+4-Puedes fallar [2] veces.

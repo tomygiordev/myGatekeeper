@@ -1,0 +1,4 @@
+Nivel 1, cantidad de personas a atender: [4].
+1-Si el tipo de visita es [Trabajo] no dejar pasar.
+2-Si la duracion de estancia es mayor a [4] semanas no dejar pasar.
+3-Puedes fallar [2] veces.

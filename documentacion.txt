@@ -1,0 +1,53 @@
+TOMAS ROLDAN GIORGI//TP3//DOCUMENTACION
+Este es el TP3, el cual cumple con TODAS las consignas del TP2, ahora, incluye un monton mas
+de funciones.
+Ahora el codigo tiene las clases Persona, ControlFronterizo, LevelConfig, Juego y Logger.
+La clase persona sigue siendo la misma que la del TP2, aunque ahora, tiene los set para los datos
+de cada persona, esto significa que los datos ahora (gracias a las modificaciones que hice) son random.
+Ademas estan las funciones serialize y deserialize que son MUY importantes para el log y el registro de datos.
+La clase ControlFronterizo es la misma que la del TP2, ya que no es para nada complejo su uso, 
+sirve para incrementar o decrementar los puntos, se relaciona directamente con la clase Juego.
+LevelConfig es una de las nuevas clases, y es PRIMORDIAL para que las consignas del TP3 
+se cumplan en el juego, es dinamica y facil de modificar!
+Esta clase se usa para leer los datos de los txt, en esta misma se guardan los datos de las reglas,
+reglas las cuales estan todas en su carpeta de su respectivo nivel; son reglas fijas pero con
+variables modificables, me refiero, entre los corchetes [variable] se puede modificar el proposito 
+de cada regla, es algo a mi parecer bastante ingenioso y que me costo mucho hacer que funcione, 
+tuve que hacer 2 switch, uno para el nivel otro para las lineas. Como el formato de los txt
+es apto (no se si el mas lindo pero si el mas apto) con solamente acumular en una string el contenido
+luego esta se puede mostrar por pantalla, luego a esa string se le hace un .clear() para dar paso
+a las reglas del siguiente nivel.
+La clase juego es la principal, por aca pasa todo, carga la configuracion de cada nivel usando LevelConfig,
+muestra las personas en pantalla y permite que el jugador evalue basandose en las reglas.
+Tambien registra las decisiones en Logger, usa ControlFronterizo para ajustar los puntos y permite guardar
+y cargar el progreso del juego, incluyendo personas, puntajes y niveles actuales.
+Para el uso de STL, use varias funciones, la que mas me sirvio fue el unordered_map el cual utilice
+para almacenar los puntos asignados a cada tipo de persona.
+Ademas tambien lo use para almacenar los nombres e imagenes ya usados para no repetir estos mismos datos,
+la verdad que me fue de mucha ayuda.
+Otra funcion STL que fue MUY importante para el cargado de reglas es regex, aca la use para extraer
+la informacion entre los corchetes permitiendo asi configurar de forma flexible las reglas.
+Use random_device ,mt19937,uniform_int_distribution (forman parte de STL) para los datos aleatorios.
+Juego coordina la serializacion y deserializacion de todo el estado del juego, estos metodos
+usan archivos binarios para el guardado y el cargado, aunque no funcione directamente como los binarios
+que vimos en clase, vi muy optimo usar estos metodos.
+Dejo para lo ultimo la clase Logger, esta registra los eventos importantes, cuando ocurre algo relevante
+guarda un mensaje en el archivo, incluyendo fecha y hora de la accion.
+Esta clase abre un archivo append para que cada nuevo mensaje se agregue al final del archivo;
+en resumidas cuentas es la clase que lleva los logs y la que hace que funcionen.
+IMPORTANTE, si quieren chequear los logs tienen que entrar al release o al build del proyecto,
+dependiendo de como lo estan ejecutando en el QT se creara en una carpeta o en la otra,
+si usamos el mingw y luego usamos el windeployqt para el .exe, los logs se crearan en la misma carpeta!
+un buen dato a tener en cuenta.
+Para abrir el proyecto solo hay que darle a OpenProject y abrir el CMakeLists.txt, supongo que es un 
+error solo mio pero a veces para abrirlo correctamente tengo que cerrar y abrir el QT hasta que funcione.
+Por las dudas de que suceda alguna incompatibilidad, tambien dejo el juego portable en un solo exe
+que va a estar en la carpeta principal.
+Los recursos estan separados en sus respectivas carpetas.
+Decidi que todo este en un main para mas practicidad, se que tal vez en terminos generales no es lo mas
+practico, pero teniendo en cuenta que es un tp me tome esa libertad, la verdad se me hizo mas comodo asi.
+Toda los elementos visuales de la interfaz fueron creados exclusivamente para este proyecto, eso
+quiere decir que son %100 originales y que no provienen de fuentes externas.
+La resolucion es de 1024x768 ya que ese es el tamaño del background principal.
+Fue todo un desafio hacer funcionar el juego con las consignas nuevas, mas que nada la de leer las reglas,
+esa sin duda fue la mas complicada.

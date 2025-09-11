@@ -1,0 +1,49 @@
+<RCC>
+    <qresource prefix="/">
+        <file>hombre/HOMBRE 2.png</file>
+        <file>hombre/HOMBRE A.png</file>
+        <file>hombre/HOMBRE AA.png</file>
+        <file>hombre/HOMBRE B.png</file>
+        <file>hombre/HOMBRE BB.png</file>
+        <file>hombre/HOMBRE C.png</file>
+        <file>hombre/HOMBRE D.png</file>
+        <file>hombre/HOMBRE DD.png</file>
+        <file>hombre/HOMBRE E.png</file>
+        <file>hombre/HOMBRE EE.png</file>
+        <file>hombre/HOMBRE EEE.png</file>
+        <file>hombre/HOMBRE F.png</file>
+        <file>hombre/HOMBRE G.png</file>
+        <file>hombre/HOMBRE GH.png</file>
+        <file>hombre/HOMBRE H.png</file>
+        <file>hombre/HOMBRE J.png</file>
+        <file>hombre/HOMBRE JD.png</file>
+        <file>hombre/HOMBRE JJ.png</file>
+        <file>hombre/HOMBRE K.png</file>
+        <file>hombre/HOMBRE L.png</file>
+        <file>hombre/HOMBRE LL.png</file>
+        <file>hombre/HOMBRE M.png</file>
+        <file>hombre/HOMBRE N.png</file>
+        <file>hombre/HOMBRE V.png</file>
+        <file>hombre/HOMBRE X.png</file>
+        <file>hombre/HOMBRE Z.png</file>
+        <file>hombre/HOMBRE.png</file>
+        <file>hombre/hombre.qrc</file>
+        <file>mujer/MUJER 2.png</file>
+        <file>mujer/MUJER 3.png</file>
+        <file>mujer/MUJER 4.png</file>
+        <file>mujer/MUJER A.png</file>
+        <file>mujer/MUJER AAA.png</file>
+        <file>mujer/MUJER B.png</file>
+        <file>mujer/MUJER E.png</file>
+        <file>mujer/MUJER F.png</file>
+        <file>mujer/MUJER GG.png</file>
+        <file>mujer/MUJER HH.png</file>
+        <file>mujer/MUJER J.png</file>
+        <file>mujer/MUJER K.png</file>
+        <file>mujer/MUJER R.png</file>
+        <file>mujer/MUJER SS.png</file>
+        <file>mujer/MUJER.png</file>
+        <file>sonido/correcto.mp3</file>
+        <file>sonido/incorrecto.mp3</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,19 @@
+<RCC>
+    <qresource prefix="/">
+        <file>mujer/MUJER 2.png</file>
+        <file>mujer/MUJER 3.png</file>
+        <file>mujer/MUJER 4.png</file>
+        <file>mujer/MUJER A.png</file>
+        <file>mujer/MUJER AAA.png</file>
+        <file>mujer/MUJER B.png</file>
+        <file>mujer/MUJER E.png</file>
+        <file>mujer/MUJER F.png</file>
+        <file>mujer/MUJER GG.png</file>
+        <file>mujer/MUJER HH.png</file>
+        <file>mujer/MUJER J.png</file>
+        <file>mujer/MUJER K.png</file>
+        <file>mujer/MUJER R.png</file>
+        <file>mujer/MUJER SS.png</file>
+        <file>mujer/MUJER.png</file>
+    </qresource>
+</RCC>
