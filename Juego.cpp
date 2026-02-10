@@ -46,15 +46,16 @@ vector<string> extraerVariosTextosCorchetes(const string &linea) {
 Juego::Juego(QMainWindow *mw)
     : mainWindow(mw), nivelActual(1), errores(0), indicePersonaActual(0),
       personasProcesadasNivel(0), verificacionesRestantes(4),
-      rng(std::random_device{}()),
-      logger(
-          "logs.txt") { // **Inicialización del logger con el archivo de log**
+      rng(std::random_device{}()), logger("logs.txt") {
 
-  // Inicializar puntos por tipo de persona
-  puntosPorTipo = {{"ALDEANO", 10},
-                   {"REFUGIADO", 15},
-                   {"DIPLOMATICO", 25},
-                   {"REVOLUCIONARIO", 25}};
+  // Inicializar puntos por tipo de persona (Roles Skater)
+  puntosPorTipo = {
+      {"LOCAL LEGEND", 50},  {"PRO SKATER", 30}, {"AMATEUR", 10},
+      {"FILMER", 20},        {"GROM", 5},        {"SPONSEE", 15},
+      {"POSER", -50},        // Si entra, resta
+      {"MALL GRABBER", -30}, // Si entra, resta
+      {"SUIT", -100} // GAME OVER logic handled elsewhere or huge penalty
+  };
   // Inicializar listas de randomización
   inicializarListas();
   // Cargar nombres y rutas de imágenes
@@ -69,35 +70,33 @@ Juego::Juego(QMainWindow *mw)
 }
 
 void Juego::inicializarListas() {
-  listaPaisesAmerica = {"Argentina",
-                        "Bolivia",
-                        "Brasil",
-                        "Chile",
-                        "Colombia",
-                        "Costa Rica",
-                        "Cuba",
-                        "Ecuador",
-                        "El Salvador",
-                        "Guatemala",
-                        "Honduras",
-                        "Mexico",
-                        "Nicaragua",
-                        "Panamá",
-                        "Paraguay",
-                        "Perú",
-                        "República Dominicana",
-                        "Uruguay",
-                        "Venezuela",
-                        "Canadá",
-                        "Estados Unidos"};
-  // Lista de estados civiles
-  listaEstadosCiviles = {"Soltero", "Casado", "Divorciado", "Viudo"};
-  // Lista de motivos de viaje
-  listaMotivosViaje = {"Vacaciones", "Conferencia", "Atencion medica",
-                       "Investigacion", "Evento Deportivo"};
-  // Lista de tipos de visita
-  listaTiposVisita = {"Turismo", "Negocios", "Visita Familiar", "Estudios",
-                      "Trabajo"};
+  // Crews (Nacionalidades)
+  listaCrews = {"Neon Hawks",     "Retro Grinders", "Cyber Rats",
+                "Concrete Kings", "Zero Logic",     "Pavement Pirates",
+                "Vibe Checkers",  "Glitch Mob",     "Analog Souls",
+                "Flipside Locals"};
+
+  // Stances (Estado Civil replacement)
+  listaStances = {"Regular", "Goofy", "Mongo"};
+
+  // Skate Styles (Motivo Viaje replacement)
+  listaSkateStyles = {"Street", "Vert", "Park", "Cruiser", "Downhill", "Tech"};
+
+  // Session Goals (Tipo Visita replacement)
+  listaSessionGoals = {"Filming Part", "Practice",    "Chill Session",
+                       "Competition",  "Photo Shoot", "Learning Tricks"};
+
+  // Brands (Pais Residencia replacement)
+  listaBrands = {// Core Brands
+                 "Deathwish", "Baker", "Zero", "Santa Cruz", "Spitfire",
+                 "Independent", "Girl", "Chocolate", "Thrasher", "AntiHero",
+                 // Corporate Brands (Acceptable mostly for Pros)
+                 "Nike SB", "Adidas", "Red Bull", "Monster",
+                 // Mall Brands (Red flag)
+                 "Zumiez", "Walmart", "Target", "Decathlon", "Generic"};
+
+  // Deck Conditions
+  listaDeckConditions = {"Fresh", "Used", "Thrashed", "Snapped", "Focus"};
 }
 
 void Juego::configurarUI() {
@@ -188,7 +187,7 @@ void Juego::configurarUI() {
   layout = new QVBoxLayout(juegoWidget);
   // Etiquetas de información
   nivelLabel = new QLabel("Nivel: 1");
-  puntosLabel = new QLabel("Puntos: 0");
+  puntosLabel = new QLabel("Reputación: 0");
   erroresLabel = new QLabel("Errores: 0");
   resultadoLabel = new QLabel("Resultado:");
   imagenPersonaLabel = new QLabel();
@@ -287,80 +286,70 @@ void Juego::configurarUI() {
     }
     QPushButton {
         background: #008CBA; /* Fondo específico para evitar absorción del fondo principal */
-    }
-)";
-  // Aplica el estilo a cada botón de acción
-  aceptarButton->setStyleSheet(botonAccionEstilo);
-  rechazarButton->setStyleSheet(botonAccionEstilo);
-  verRestriccionesButton->setStyleSheet(botonAccionEstilo);
-  verificarPaisRestringidoButton->setStyleSheet(botonAccionEstilo);
-  verificarDocumentacionButton->setStyleSheet(botonAccionEstilo);
+  personaInfo->setStyleSheet("font-size: 14px;");
 
-  // Ajustar tamaños de los botones
-  aceptarButton->setFixedSize(120, 40);
-  rechazarButton->setFixedSize(120, 40);
-  verRestriccionesButton->setFixedSize(150, 40);
-  verificarPaisRestringidoButton->setFixedSize(200, 40);
-  verificarDocumentacionButton->setFixedSize(200, 40);
+  centerLayout->addWidget(imagenPersonaLabel);
+  centerLayout->addWidget(personaInfo);
 
-  // Añadir etiquetas al layout con espacio
-  layout->addWidget(nivelLabel, 0, Qt::AlignCenter);
-  layout->addWidget(puntosLabel, 0, Qt::AlignCenter);
-  layout->addWidget(erroresLabel, 0, Qt::AlignCenter);
-  layout->addSpacing(10);
-  layout->addWidget(imagenPersonaLabel, 0, Qt::AlignCenter);
-  layout->addSpacing(10);
-  layout->addWidget(personaInfo, 0, Qt::AlignCenter);
-  layout->addSpacing(10);
-  layout->addWidget(resultadoLabel, 0, Qt::AlignCenter);
-  layout->addSpacing(20);
+  // Action Buttons
+  QHBoxLayout *actionLayout = new QHBoxLayout();
+  aceptarButton = new QPushButton("LET IN (Cool)");
+  rechazarButton = new QPushButton("KICK OUT (Poser)");
 
-  // Añadir botones de decisión y el nuevo botón en el orden correcto
-  QHBoxLayout *botonesLayout = new QHBoxLayout;
-  botonesLayout->addStretch();
-  botonesLayout->addWidget(aceptarButton);
-  botonesLayout->addSpacing(20); // Espacio entre botones
-  botonesLayout->addWidget(verRestriccionesButton);
-  botonesLayout->addSpacing(20); // Espacio entre botones
-  botonesLayout->addWidget(rechazarButton);
-  botonesLayout->addStretch();
-  layout->addLayout(botonesLayout);
-  layout->addSpacing(20);
+  aceptarButton->setStyleSheet(
+      "background-color: #004400; color: #00ff00; font-size: 20px; "
+      "font-weight: bold; border: 2px solid #00ff00;");
+  rechazarButton->setStyleSheet(
+      "background-color: #440000; color: #ff0000; font-size: 20px; "
+      "font-weight: bold; border: 2px solid #ff0000;");
 
-  // Añadir botones de verificación
-  QHBoxLayout *verificacionesLayout = new QHBoxLayout;
-  verificacionesLayout->addStretch();
-  verificacionesLayout->addWidget(verificarPaisRestringidoButton);
-  verificacionesLayout->addSpacing(20); // Espacio entre botones
-  verificacionesLayout->addWidget(verificarDocumentacionButton);
-  verificacionesLayout->addStretch();
-  layout->addLayout(verificacionesLayout);
+  actionLayout->addWidget(aceptarButton);
+  actionLayout->addWidget(rechazarButton);
 
-  // Aplicar márgenes y espaciado al layout principal
-  layout->setContentsMargins(20, 20, 20, 20);
-  layout->setSpacing(15);
+  // Verification Buttons
+  QHBoxLayout *verifyLayout = new QHBoxLayout();
+  verificarPaisRestringidoButton = new QPushButton("CHECK CREW REP");
+  verificarDocumentacionButton = new QPushButton("CHECK ID / DOCS");
+  verRestriccionesButton = new QPushButton("VIEW DAILY ORDERS");
 
-  // Agregar widgets al stackedWidget
-  stackedWidget->addWidget(menuInicioWidget); // Índice 0
-  stackedWidget->addWidget(reglasWidget);     // Índice 1
-  stackedWidget->addWidget(juegoWidget);      // Índice 2
+  verifyLayout->addWidget(verificarPaisRestringidoButton);
+  verifyLayout->addWidget(verificarDocumentacionButton);
+  verifyLayout->addWidget(verRestriccionesButton);
 
-  // Conectar señales y slots
+  resultadoLabel = new QLabel("");
+  resultadoLabel->setStyleSheet(
+      "font-size: 18px; color: #ffff00; font-weight: bold; margin-top: 10px;");
+  resultadoLabel->setAlignment(Qt::AlignCenter);
+
+  layout->addLayout(topBar);
+  layout->addLayout(centerLayout);
+  layout->addWidget(resultadoLabel);
+  layout->addLayout(actionLayout);
+  layout->addLayout(verifyLayout);
+
+  // Add widgets to Stack
+  stackedWidget->addWidget(menuInicioWidget);
+  stackedWidget->addWidget(reglasWidget);
+  stackedWidget->addWidget(juegoWidget);
+
+  stackedWidget->setCurrentIndex(0); // Start at Menu
+
+  // Connections
   connect(jugarButton, &QPushButton::clicked, this, &Juego::iniciarJuego);
   connect(reglasButton, &QPushButton::clicked, this, &Juego::mostrarReglas);
   connect(salirButton, &QPushButton::clicked, mainWindow, &QMainWindow::close);
   connect(volverButton, &QPushButton::clicked, this, &Juego::volverAlMenu);
   connect(cargarPartidaButton, &QPushButton::clicked, this,
-          &Juego::cargarPartida); // **Conexión para cargar partida**
+          &Juego::cargarPartida);
 
   connect(aceptarButton, &QPushButton::clicked, this, &Juego::aceptarPersona);
   connect(rechazarButton, &QPushButton::clicked, this, &Juego::rechazarPersona);
-  connect(verRestriccionesButton, &QPushButton::clicked, this,
-          &Juego::mostrarRestricciones);
   connect(verificarPaisRestringidoButton, &QPushButton::clicked, this,
           &Juego::verificarPaisRestringido);
   connect(verificarDocumentacionButton, &QPushButton::clicked, this,
           &Juego::verificarDocumentacion);
+  connect(verRestriccionesButton, &QPushButton::clicked, this,
+          &Juego::mostrarRestricciones);
 
   // Inicializar sonidos
   sonidoCorrecto.setSource(QUrl("qrc:/sonido/correcto.wav"));
@@ -385,23 +374,35 @@ void Juego::configurarUI() {
 }
 
 QString Juego::obtenerReglasDelJuego() {
-  return QString("<h2>Reglas del Juego</h2>"
-                 "<p>El objetivo es revisar las solicitudes de entrada y tomar "
-                 "decisiones precisas para ganar puntos y evitar multas.</p>"
-                 "<h3>Tipos de Personas:</h3>"
-                 "<ul>"
-                 "<li><b>Aldeano:</b> +10 puntos si autorizas correctamente, "
-                 "-15 puntos si te equivocas.</li>"
-                 "<li><b>Refugiado político:</b> +15 puntos si autorizas "
-                 "correctamente, -25 puntos si te equivocas.</li>"
-                 "<li><b>Diplomático:</b> +25 puntos si autorizas "
-                 "correctamente, -25 puntos y multa si te equivocas.</li>"
-                 "<li><b>Revolucionario:</b> Nunca debe entrar. -25 puntos y "
-                 "multa si te equivocas.</li>"
-                 "</ul>"
-                 "<h3>Restricciones Adicionales:</h3>"
-                 "<p>Se aplicarán restricciones adicionales en cada nivel.</p>"
-                 "<p><b>¡Buena suerte!</b></p>");
+  return QString(
+      "<h2>Skatetopia Rules</h2>"
+      "<p>Bienvenido a <b>Skatetopia</b>, la ciudad secreta. Eres el "
+      "<b>Vibe Guard</b>.</p>"
+      "<p>Tu misión: Dejar pasar a los que tienen STEEZ y rechazar a "
+      "los POSERS.</p>"
+      "<h3>Roles:</h3>"
+      "<ul>"
+      "<li><b>Local Legend (+50):</b> Los reyes del spot. NUNCA "
+      "rechazar (salvo regla específica).</li>"
+      "<li><b>Pro Skater (+30):</b> Traen prestigio.</li>"
+      "<li><b>Amateur (+10):</b> Skaters promedio.</li>"
+      "<li><b>Filmer (+20):</b> Esenciales para la cultura.</li>"
+      "<li><b>Poser (-50):</b> Falsos. Rechazo INMEDIATO.</li>"
+      "<li><b>Mall Grabber (-30):</b> Agarran la tabla por el eje. "
+      "Rechazar.</li>"
+      "<li><b>Suit (-100):</b> Corporativos o Policias. GAME OVER si "
+      "entran 3.</li>"
+      "</ul>"
+      "<h3>Reglas de Oro (STEEZ):</h3>"
+      "<ul>"
+      "<li><b>Mongo Push:</b> Si patea con el pie de adelante... "
+      "RECHAZAR (salvo Leyendas).</li>"
+      "<li><b>Mall Brands:</b> Marcas de centro comercial (Zumiez, "
+      "Walmart) -> POSER.</li>"
+      "<li><b>Deck Condition:</b> Tabla nueva (Fresh) en un Amateur "
+      "es sospechoso.</li>"
+      "</ul>"
+      "<p>¡Mantén el Vibe real!</p>");
 }
 
 void Juego::volverAlMenu() {
@@ -470,199 +471,93 @@ void Juego::cargarImagenes() {
 
 void Juego::cargarConfiguracionNivel(int nivel) {
   nivelConfig = LevelConfig();
-  QString rutaReglas = QString(":/nivel%1/reglasNivel%1.txt").arg(nivel);
-  QFile archivoReglas(rutaReglas);
+  nivelConfig.nivel = nivel;
   acumularReglas.clear();
 
-  if (!archivoReglas.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    QMessageBox::critical(
-        mainWindow, "Error",
-        QString("No se pudo cargar el archivo de reglas del nivel %1.")
-            .arg(nivel));
+  switch (nivel) {
+  case 1:
+    nivelConfig.cantidadPersonas = 5;
+    nivelConfig.maxPosersAllowed = 2;
+    nivelConfig.duracionMaximaEstancia = 4;
+    nivelConfig.bannedGoals.push_back("Filming Part");
+
+    acumularReglas = "Reglas Nivel 1:\n"
+                     "- Skaters hoy: 5\n"
+                     "- Prohibido: Grabar videos [Filming Part]\n"
+                     "- Duración máx: 4 horas\n"
+                     "- Máx errores: 2";
+    break;
+
+  case 2:
+    nivelConfig.cantidadPersonas = 6;
+    nivelConfig.maxPosersAllowed = 2;
+    nivelConfig.bannedBrands.push_back("Zumiez");
+    nivelConfig.bannedStyles.push_back("Downhill");
+    nivelConfig.bannedCrews.push_back("Chile");
+    nivelConfig.bannedStyles.push_back("Investigacion");
+
+    acumularReglas = "Reglas Nivel 2:\n"
+                     "- Skaters hoy: 6\n"
+                     "- Prohibido Marca: [Zumiez]\n"
+                     "- Prohibido Estilo: [Downhill], [Investigacion]\n"
+                     "- Crew Prohibida: [Chile]\n"
+                     "- [Competition] solo si < 6 horas\n"
+                     "- Máx errores: 2";
+    break;
+
+  case 3:
+    nivelConfig.cantidadPersonas = 7;
+    nivelConfig.maxPosersAllowed = 2;
+    nivelConfig.bannedRoles.push_back("GROM");
+
+    acumularReglas = "Reglas Nivel 3:\n"
+                     "- Skaters hoy: 7\n"
+                     "- Rol Prohibido: [GROM] (No babysitting)\n"
+                     "- [Learning Tricks] solo si < 3 horas\n"
+                     "- Máx errores: 2";
+    break;
+
+  case 4:
+    nivelConfig.cantidadPersonas = 7;
+    nivelConfig.maxPosersAllowed = 3;
+    nivelConfig.bannedRoles.push_back("FILMER");
+    nivelConfig.bannedCrews = {"Cyber Rats", "Concrete Kings", "Zero Logic",
+                               "Pavement Pirates"};
+
+    acumularReglas = "Reglas Nivel 4:\n"
+                     "- Skaters hoy: 7\n"
+                     "- Rol Prohibido: [FILMER]\n"
+                     "- Prohibido: [SPONSEE] en [Park]\n"
+                     "- Prohibido: Crew [Neon Hawks] usando [Nike SB]\n"
+                     "- Crews en guerra (BANEADAS): Cyber Rats, Concrete "
+                     "Kings, Zero Logic, Pavement Pirates\n"
+                     "- Máx errores: 3";
+    break;
+
+  case 5:
+    nivelConfig.cantidadPersonas = 10;
+    nivelConfig.maxPosersAllowed = 1;
+    nivelConfig.bannedRoles.push_back("GROM");
+    nivelConfig.bannedStances.push_back("Mongo");
+    nivelConfig.edad = 16; // Min age
+
+    acumularReglas = "Reglas Nivel 5:\n"
+                     "- Skaters hoy: 10\n"
+                     "- Prohibido: [GROM]\n"
+                     "- Prohibido: [AMATEUR] haciendo [Vert]\n"
+                     "- Prohibido: [Vibe Checkers] usando [Walmart]\n"
+                     "- Prohibido: [Mongo] Stance (Absoluto)\n"
+                     "- Edad Mínima: 16\n"
+                     "- [Street] solo si < 40 años\n"
+                     "- [Photo Shoot] solo si < 5 horas\n"
+                     "- [Downhill] solo si < 5 horas\n"
+                     "- Máx errores: 1 (MODO LEYENDA)";
+    break;
+  default:
+    QMessageBox::critical(mainWindow, "Error",
+                          QString("Nivel %1 no está definido.").arg(nivel));
     QApplication::quit();
   }
-
-  QTextStream in(&archivoReglas);
-  int linea = 0;
-  while (!in.atEnd()) {
-    QString reglaQt = in.readLine().trimmed();
-    std::string regla = reglaQt.toStdString();
-    if (regla.empty())
-      continue;
-
-    switch (nivel) {
-    case 1: { // NIVEL 1
-      switch (linea) {
-      case 0:
-        nivelConfig.cantidadPersonas = extraerValorDeCorchetes(regla);
-        break;
-      case 1:
-        nivelConfig.tipoVisitaRestringido = extraerTextoDeCorchetes(regla);
-        break;
-      case 2:
-        nivelConfig.duracionMaximaEstancia = extraerValorDeCorchetes(regla);
-        break;
-      case 3:
-        nivelConfig.maxFallosPermitidos = extraerValorDeCorchetes(regla);
-        break;
-      }
-      break;
-    }
-    case 2: { // NIVEL 2
-      switch (linea) {
-      case 0:
-        nivelConfig.cantidadPersonas = extraerValorDeCorchetes(regla);
-        break;
-      case 1: {
-        std::vector<std::string> valores = extraerVariosTextosCorchetes(regla);
-        if (valores.size() >= 2) {
-          nivelConfig.tipoVisitaRestringido = valores[0];
-          nivelConfig.duracionMaximaEstancia = stoi(valores[1]);
-        }
-      } break;
-      case 2:
-        nivelConfig.paisRechazar = extraerTextoDeCorchetes(regla);
-        break;
-      case 3:
-        nivelConfig.motivoViajeRestringido = extraerTextoDeCorchetes(regla);
-        break;
-      case 4:
-        nivelConfig.maxFallosPermitidos = extraerValorDeCorchetes(regla);
-        break;
-      }
-      break;
-    }
-    case 3: { // NIVEL 3
-      switch (linea) {
-      case 0:
-        nivelConfig.cantidadPersonas = extraerValorDeCorchetes(regla);
-        break;
-      case 1:
-        // Supongamos que esta línea es una regla adicional sin extraer valores
-        // específicos
-        {
-        }
-        break;
-      case 2:
-        nivelConfig.tipoPersonaRechazar = extraerTextoDeCorchetes(regla);
-        break;
-      case 3: {
-        std::vector<std::string> valores = extraerVariosTextosCorchetes(regla);
-        if (valores.size() >= 2) {
-          nivelConfig.tipoVisitaRestringido = valores[0];
-          nivelConfig.duracionMaximaEstancia = std::stoi(valores[1]);
-        }
-      } break;
-      case 4:
-        nivelConfig.maxFallosPermitidos = extraerValorDeCorchetes(regla);
-        break;
-      }
-      break;
-    }
-    case 4: { // NIVEL 4
-      switch (linea) {
-      case 0:
-        nivelConfig.cantidadPersonas = extraerValorDeCorchetes(regla);
-        break;
-      case 1:
-        nivelConfig.tipoPersonaRechazar = extraerTextoDeCorchetes(regla);
-        break;
-      case 2: {
-        std::vector<std::string> valores = extraerVariosTextosCorchetes(regla);
-        if (valores.size() >= 2) {
-          nivelConfig.tipoPersonaRechazar = valores[0];
-          nivelConfig.motivoViajeRestringido = valores[1];
-        }
-      } break;
-      case 3: {
-        std::vector<std::string> valores = extraerVariosTextosCorchetes(regla);
-        if (valores.size() >= 2) {
-          nivelConfig.nacionalidadStruct = valores[0];
-          nivelConfig.residenciaStruct = valores[1];
-        }
-      } break;
-      case 4:
-        nivelConfig.maxFallosPermitidos = extraerValorDeCorchetes(regla);
-        break;
-      case 5: {
-        std::vector<std::string> paises = extraerVariosTextosCorchetes(regla);
-        nivelConfig.paisesEnGuerra[0] = paises[0];
-        paisesGuerra.push_back(paises[0]);
-        nivelConfig.paisesEnGuerra[1] = paises[1];
-        paisesGuerra.push_back(paises[1]);
-        nivelConfig.paisesEnGuerra[2] = paises[2];
-        paisesGuerra.push_back(paises[2]);
-        nivelConfig.paisesEnGuerra[3] = paises[3];
-        paisesGuerra.push_back(paises[3]);
-      } break;
-      }
-      break;
-    }
-    case 5: { // NIVEL 5
-      switch (linea) {
-      case 0:
-        nivelConfig.cantidadPersonas = extraerValorDeCorchetes(regla);
-        break;
-      case 1: {
-        std::vector<std::string> valores = extraerVariosTextosCorchetes(regla);
-        if (valores.size() >= 2) {
-          nivelConfig.tipoVisitaRestringido = valores[0];
-          nivelConfig.duracionMaximaEstancia = stoi(valores[1]);
-        }
-      } break;
-      case 2:
-        nivelConfig.tipoPersonaRechazar = extraerTextoDeCorchetes(regla);
-        break;
-      case 3: {
-        std::vector<std::string> valores = extraerVariosTextosCorchetes(regla);
-        if (valores.size() >= 2) {
-          nivelConfig.tipoPersonaRechazar = valores[0];
-          nivelConfig.motivoViajeRestringido = valores[1];
-        }
-      } break;
-      case 4: {
-        std::vector<std::string> valores = extraerVariosTextosCorchetes(regla);
-        if (valores.size() >= 2) {
-          nivelConfig.nacionalidadStruct = valores[0];
-          nivelConfig.residenciaStruct = valores[1];
-        }
-      } break;
-      case 5: {
-        std::vector<std::string> valores = extraerVariosTextosCorchetes(regla);
-        if (valores.size() >= 2) {
-          nivelConfig.duracionMaximaEstancia = std::stoi(valores[0]);
-          nivelConfig.motivoViajeRestringido = valores[1];
-        }
-      } break;
-      case 6:
-        nivelConfig.estadoAmor = extraerValorDeCorchetes(regla);
-        break;
-      case 7:
-        nivelConfig.edad = extraerValorDeCorchetes(regla);
-        break;
-      case 8: {
-        std::vector<std::string> valores = extraerVariosTextosCorchetes(regla);
-        if (valores.size() >= 2) {
-          nivelConfig.edad = std::stoi(valores[0]);
-          nivelConfig.motivoViajeRestringido = valores[1];
-        }
-      } break;
-      case 9:
-        nivelConfig.maxFallosPermitidos = extraerValorDeCorchetes(regla);
-        break;
-      }
-      break;
-    }
-    default:
-      QMessageBox::critical(mainWindow, "Error",
-                            QString("Nivel %1 no está definido.").arg(nivel));
-      QApplication::quit();
-    }
-    acumularReglas += reglaQt + "\n";
-    linea++;
-  }
-
-  archivoReglas.close();
 }
 
 void Juego::cargarPersonasNivel(int nivel) {
@@ -682,103 +577,133 @@ void Juego::cargarPersonasNivel(int nivel) {
   size_t imagenIndexH = 0;
   size_t imagenIndexM = 0;
 
-  std::uniform_int_distribution<int> distTipoPersona(0, 3); // valores
-                                                            // aleatorios
+  // Distribuciones
   std::uniform_int_distribution<int> distBooleano(0, 1);
+  std::uniform_int_distribution<size_t> distCrew(0, listaCrews.size() - 1);
+  std::uniform_int_distribution<size_t> distStance(0, listaStances.size() - 1);
+  std::uniform_int_distribution<size_t> distBrand(0, listaBrands.size() - 1);
+  std::uniform_int_distribution<size_t> distStyle(0,
+                                                  listaSkateStyles.size() - 1);
+  std::uniform_int_distribution<size_t> distGoal(0,
+                                                 listaSessionGoals.size() - 1);
+  std::uniform_int_distribution<size_t> distDeck(0, listaDeckConditions.size() -
+                                                        1);
+  std::uniform_int_distribution<int> distDuration(1, 8); // Horas de sesion
 
-  std::uniform_int_distribution<size_t> distPais(0,
-                                                 listaPaisesAmerica.size() - 1);
-  std::uniform_int_distribution<size_t> distTipoV(0,
-                                                  listaTiposVisita.size() - 1);
-  std::uniform_int_distribution<size_t> distECivil(
-      0, listaEstadosCiviles.size() - 1);
-  std::uniform_int_distribution<size_t> distMotivo(0, listaMotivosViaje.size() -
-                                                          1);
-  std::uniform_int_distribution<int> distDuracion(1, 10);
-  std::uniform_int_distribution<size_t> distTipoPersonaIndex(0, 3);
+  vector<string> roles = {"LOCAL LEGEND", "PRO SKATER",   "AMATEUR",
+                          "FILMER",       "GROM",         "SPONSEE",
+                          "POSER",        "MALL GRABBER", "SUIT"};
 
-  vector<string> tiposPersona = {"ALDEANO", "REFUGIADO", "DIPLOMATICO",
-                                 "REVOLUCIONARIO"};
+  // Pesos para los roles (simple logic: random role)
+  std::uniform_int_distribution<size_t> distRole(0, roles.size() - 1);
 
   for (int i = 0; i < cantidadPersonas; ++i) {
     Persona p;
     // Asignar género aleatoriamente
-    bool generoAleatorio =
-        (distBooleano(rng) == 0); // true: hombre, false: mujer
-    p.setGenero(generoAleatorio);
+    bool generoAleatorio = (distBooleano(rng) == 0);
+    p.setGender(generoAleatorio);
 
     // Seleccionar nombre
     std::string nombreSeleccionado;
     if (generoAleatorio) { // Hombre
-      if (nombreIndexH >= nombresHombres.size()) {
-        QMessageBox::critical(mainWindow, "Error",
-                              "No quedan nombres de hombres disponibles.");
-        break;
-      }
+      if (nombreIndexH >= nombresHombres.size())
+        nombreIndexH = 0; // Loop if needed
       nombreSeleccionado = nombresHombres[nombreIndexH++];
     } else { // Mujer
-      if (nombreIndexM >= nombresMujeres.size()) {
-        QMessageBox::critical(mainWindow, "Error",
-                              "No quedan nombres de mujeres disponibles.");
-        break;
-      }
+      if (nombreIndexM >= nombresMujeres.size())
+        nombreIndexM = 0;
       nombreSeleccionado = nombresMujeres[nombreIndexM++];
     }
-    p.setNombreApellido(nombreSeleccionado);
+    p.setName(nombreSeleccionado);
 
     // Seleccionar imagen
     QString imagenSeleccionada;
     if (generoAleatorio) { // Hombre
-      if (imagenIndexH >= imagenesHombres.size()) {
-        QMessageBox::critical(mainWindow, "Error",
-                              "No quedan imágenes de hombres disponibles.");
-        break;
-      }
+      if (imagenIndexH >= imagenesHombres.size())
+        imagenIndexH = 0;
       imagenSeleccionada = imagenesHombres[imagenIndexH++];
     } else { // Mujer
-      if (imagenIndexM >= imagenesMujeres.size()) {
-        QMessageBox::critical(mainWindow, "Error",
-                              "No quedan imágenes de mujeres disponibles.");
-        break;
-      }
+      if (imagenIndexM >= imagenesMujeres.size())
+        imagenIndexM = 0;
       imagenSeleccionada = imagenesMujeres[imagenIndexM++];
     }
-    p.setRutaImagen(imagenSeleccionada);
+    p.setImagePath(imagenSeleccionada);
 
-    // Asignar nacionalidad y país de residencia aleatoriamente
-    string nacionalidad = listaPaisesAmerica[distPais(rng)];
-    string paisResi = listaPaisesAmerica[distPais(rng)];
+    // Asignar atributos base
+    string crew = listaCrews[distCrew(rng)];
+    string stance = listaStances[distStance(rng)];
+    string brand = listaBrands[distBrand(rng)];
+    string style = listaSkateStyles[distStyle(rng)];
+    string goal = listaSessionGoals[distGoal(rng)];
+    string deck = listaDeckConditions[distDeck(rng)];
+    string role = roles[distRole(rng)];
 
-    p.setNacionalidad(nacionalidad);
-    p.setPaisResi(paisResi);
-    // Asignar fecha de nacimiento y calcular la edad
-    p.setFechaNac(generarFechaAleatoria());
-    int edad = calcularEdad(p.obtenerFechaNac());
+    // LOGICA ESPECIFICA DE ROLES (The "STEEZ" Check)
 
-    // Asignar otros atributos aleatoriamente
-    p.setFechaNac(generarFechaAleatoria());
-    p.setTipoV(listaTiposVisita[distTipoV(rng)]);
-    p.setMotivo(listaMotivosViaje[distMotivo(rng)]);
-    p.setDuracion(distDuracion(rng)); // Duración entre 1 y 10 semanas
-    p.setViajaSolo(distBooleano(rng) == 0);
-    p.setTipoPersona(tiposPersona[distTipoPersonaIndex(rng)]);
-    p.setDocumentacionValida(distBooleano(rng) == 0);
-    // Asignar estado civil según la edad
-    if (edad < 18) {
-      p.setECivil("Soltero"); // Menores de edad solo pueden estar "Soltero"
-    } else {
-      p.setECivil(listaEstadosCiviles[distECivil(
-          rng)]); // Asignación aleatoria para mayores de edad
+    // 1. LOCAL LEGEND: Nunca Mongo, Marcas Core, Tabla usada
+    if (role == "LOCAL LEGEND") {
+      if (stance == "Mongo")
+        stance = "Regular";
+      // Forzar marca core (primeras 10 de la lista)
+      std::uniform_int_distribution<size_t> distCore(0, 9);
+      brand = listaBrands[distCore(rng)];
+      if (deck == "Fresh" || deck == "Snapped")
+        deck = "Thrashed";
     }
 
-    for (auto pa : paisesGuerra) {
-      if (nacionalidad == pa) {
-        p.setPaisRestringido(true);
-      } else {
-        p.setPaisRestringido(false);
+    // 2. POSER / MALL GRABBER: Alta chance de Mongo, Mall Brands, Texto o Tabla
+    // Fresh
+    if (role == "POSER" || role == "MALL GRABBER") {
+      if (distBooleano(rng))
+        stance = "Mongo"; // 50% chance Mongo
+      if (distBooleano(rng)) {
+        // Forzar marca Mall (ultimas 5)
+        std::uniform_int_distribution<size_t> distMall(listaBrands.size() - 5,
+                                                       listaBrands.size() - 1);
+        brand = listaBrands[distMall(rng)];
+      }
+      if (distBooleano(rng))
+        deck = "Fresh";
+    }
+
+    // 3. SUIT: Siempre viene a "Business" (no existe), usamos "Chill Session" o
+    // algo sospechoso
+    if (role == "SUIT") {
+      brand = "Generic";
+      style = "Cruiser";
+      deck = "Fresh";
+      goal = "Observation"; // Custom goal? or stuck to list? Let's stick to
+                            // list but look weird.
+      // Suits don't skate well using lists, maybe just make them look weird via
+      // Deck/Brand
+    }
+
+    p.setCrew(crew);
+    p.setStance(stance);
+    p.setBrand(brand);
+    p.setSkateStyle(style);
+    p.setSessionGoal(goal);
+    p.setDeckCondition(deck);
+    p.setSessionDuration(distDuration(rng));
+    p.setRole(role);
+    p.setHasHelmet(distBooleano(rng) == 0); // 50/50 helmet usage
+
+    // Fecha Nac
+    p.setBirthDate(generarFechaAleatoria());
+    // p.setDocumentacionValida(distBooleano(rng) == 0); // Removed from logic
+    // to rely on rules? Wait, documentation check is usually manual button.
+    // Let's set it randomly.
+    p.setHasValidID(distBooleano(rng) == 0);
+
+    // Banned Crew logic (reemplaza paisGuerra)
+    bool isBanned = false;
+    for (const auto &banned : bannedCrews) {
+      if (crew == banned) {
+        isBanned = true;
+        break;
       }
     }
-    // p.setPaisRestringido(paisesGuerra.find(nacionalidad) != paisesgu.end());
+    p.setIsBannedCrew(isBanned);
 
     personas.push_back(p);
   }
@@ -788,58 +713,60 @@ void Juego::mostrarPersonaActual() {
   if (indicePersonaActual < personas.size()) {
     const Persona &p = personas[indicePersonaActual];
     verificacionesRestantes = nivelConfig.maxVerificaciones;
-    int edad = calcularEdad(p.obtenerFechaNac());
-    QString info = QString("Nombre y Apellido: %1\n")
-                       .arg(QString::fromStdString(p.obtenerNombreApellido()));
-    info += QString("Género: %1\n").arg(p.getGenero() ? "Hombre" : "Mujer");
-    info += QString("Nacionalidad: %1\nFecha de Nacimiento: %2\nEdad: %3 "
-                    "años\nTipo de Persona: %4\nTipo de Visita: %5\nDuración: "
-                    "%6 semanas\nEstado Civil: %7")
-                .arg(QString::fromStdString(p.obtenerNacionalidad()))
-                .arg(QString::fromStdString(p.obtenerFechaNac()))
-                .arg(edad)
-                .arg(QString::fromStdString(p.getTipoPersona()))
-                .arg(QString::fromStdString(p.obtenerTipoV()))
-                .arg(p.obtenerDuracion())
-                .arg(QString::fromStdString(p.obtenerECivil()));
-    if (nivelActual >= 2) {
-      info += QString("\nPaís de Residencia: %1\nMotivo del Viaje: %2")
-                  .arg(QString::fromStdString(p.obtenerPaisResi()))
-                  .arg(QString::fromStdString(p.obtenerMotivo()));
-    }
-    if (nivelActual >= 3) {
-      info +=
-          QString("\nViaja Solo: %1").arg(p.obtenerViajaSolo() ? "Sí" : "No");
-    }
-    if (nivelActual >= 4) {
-      info += QString("\nVisita país restringido [VERIFICAR]");
-      info += QString("\nDocumentación válida [VERIFICAR]");
-      verificacionesRestantes = nivelConfig.maxVerificaciones;
-    }
+    int edad = calcularEdad(p.getBirthDate());
+    QString info =
+        QString("<b>Name:</b> %1\n").arg(QString::fromStdString(p.getName()));
 
-    personaInfo->setText(info);
-    nivelLabel->setText("Nivel: " + QString::number(nivelActual));
-    puntosLabel->setText("Puntos: " + QString::number(control.getPuntos()));
-    erroresLabel->setText("Errores: " + QString::number(errores));
+    info +=
+        QString("<b>Rol:</b> %1\n").arg(QString::fromStdString(p.getRole()));
+    info +=
+        QString("<b>Crew:</b> %1\n").arg(QString::fromStdString(p.getCrew()));
 
-    // Mostrar imagen
-    QPixmap pixmap(p.getRutaImagen());
+    info += QString("<b>Stance:</b> %1\n")
+                .arg(QString::fromStdString(p.getStance()));
+    info +=
+        QString("<b>Brand:</b> %1\n").arg(QString::fromStdString(p.getBrand()));
+    info += QString("<b>Deck:</b> %1\n")
+                .arg(QString::fromStdString(p.getDeckCondition()));
+
+    info += QString("<b>Style:</b> %1\n")
+                .arg(QString::fromStdString(p.getSkateStyle()));
+    info += QString("<b>Goal:</b> %1\n")
+                .arg(QString::fromStdString(p.getSessionGoal()));
+
+    info += QString("<b>Edad:</b> %1\n").arg(edad);
+    info += QString("<b>Helmet:</b> %1\n").arg(p.getHasHelmet() ? "Yes" : "No");
+    info += QString("<b>Duration:</b> %1 hours\n").arg(p.getSessionDuration());
+
+    personaInfo->setHtml(info); // Usar setHtml para formato negrita
+
+    // Cargar imagen
+    QPixmap pixmap(p.getImagePath());
     if (!pixmap.isNull()) {
-      // Escalar el pixmap al tamaño fijo del QLabel manteniendo las
-      // proporciones
-      QPixmap scaledPixmap =
-          pixmap.scaled(imagenPersonaLabel->size(), Qt::KeepAspectRatio,
-                        Qt::SmoothTransformation);
-      imagenPersonaLabel->setPixmap(scaledPixmap);
+      imagenPersonaLabel->setPixmap(pixmap.scaled(imagenPersonaLabel->size(),
+                                                  Qt::KeepAspectRatio,
+                                                  Qt::SmoothTransformation));
     } else {
-      imagenPersonaLabel->setText("Imagen no disponible");
+      imagenPersonaLabel->setText("No Image");
     }
+
+    // Actualizar etiquetas
+    nivelLabel->setText(QString("Nivel: %1").arg(nivelActual));
+    puntosLabel->setText(
+        QString("Reputación: %1").arg(vibeCheck.getReputation()));
+    erroresLabel->setText(QString("Errores: %1 / %2")
+                              .arg(errores)
+                              .arg(nivelConfig.maxPosersAllowed));
+    resultadoLabel->setText("");
 
     // Mostrar botones de verificación
-    verificarPaisRestringidoButton->setVisible(nivelActual >= 3);
+    verificarPaisRestringidoButton->setVisible(nivelActual >=
+                                               3); // Example condition
     verificarDocumentacionButton->setVisible(nivelActual >= 3);
+
   } else {
-    finJuego("Has completado todos los niveles.");
+    // Fin del nivel
+    mostrarResultadoNivel();
   }
 }
 
@@ -880,9 +807,33 @@ int Juego::calcularEdad(const string &fechaNac) {
   return edad;
 }
 
+void Juego::mostrarResultadoNivel() {
+  if (errores <= nivelConfig.maxPosersAllowed) {
+    QMessageBox::information(
+        mainWindow, "Level Finalized",
+        QString("Level %1 Complete!\nReputation: %2\nErrors: %3")
+            .arg(nivelActual)
+            .arg(vibeCheck.getReputation())
+            .arg(errores));
+    nivelActual++;
+    if (nivelActual > 5) {
+      finJuego("You are a SKATE LEGEND! All levels complete.");
+    } else {
+      cargarConfiguracionNivel(nivelActual);
+      cargarPersonasNivel(nivelActual);
+      indicePersonaActual = 0;
+      personasProcesadasNivel = 0;
+      errores = 0;
+      mostrarPersonaActual();
+    }
+  } else {
+    finJuego("Level Failed. Too many posers entered.");
+  }
+}
+
 void Juego::cargarProgreso() {
   nivelActual = 1;
-  control.setPuntos(0);
+  vibeCheck.setReputation(0);
   errores = 0;
   indicePersonaActual = 0;
   personasProcesadasNivel = 0;
@@ -907,181 +858,162 @@ void Juego::finJuego(const std::string &mensaje) {
   volverAlMenu();
 }
 bool Juego::evaluarDecision(const Persona &p, bool decision) {
-  if (p.getTipoPersona() == "REVOLUCIONARIO") {
-    if (decision) {
-      return false;
-    } else {
-      return true;
-    }
-  }
-  if (nivelActual == 1) { // Nivel 1
-    if (decision && p.obtenerTipoV() == nivelConfig.tipoVisitaRestringido)
-      return false;
-    if (decision && p.obtenerDuracion() > nivelConfig.duracionMaximaEstancia)
-      return false;
+  // 1. Roles Absolutos
+  std::string role = p.getRole();
 
-    if (!decision && p.obtenerTipoV() != nivelConfig.tipoVisitaRestringido &&
-        p.obtenerDuracion() <= nivelConfig.duracionMaximaEstancia)
-      return false; // debio ser aceptado
-    return true;
+  // SUIT: Must Reject. Game Over logic handled in points (-100), but here
+  // we return if decision was correct. If Decision=Allow (True) ->
+  // Incorrect. If Decision=Deny (False) -> Correct.
+  if (role == "SUIT") {
+    return !decision;
   }
 
-  if (nivelActual == 2) { // Nivel 2
-    if (decision && p.obtenerTipoV() == nivelConfig.tipoVisitaRestringido &&
-        p.obtenerDuracion() > nivelConfig.duracionMaximaEstancia)
-      return false;
-    if (decision && p.obtenerNacionalidad() == nivelConfig.paisRechazar)
-      return false;
-    if (decision && p.obtenerMotivo() == nivelConfig.motivoViajeRestringido)
-      return false;
-
-    if (!decision &&
-        !(p.obtenerTipoV() == nivelConfig.tipoVisitaRestringido &&
-          p.obtenerDuracion() > nivelConfig.duracionMaximaEstancia) &&
-        p.obtenerNacionalidad() != nivelConfig.paisRechazar &&
-        p.obtenerMotivo() != nivelConfig.motivoViajeRestringido)
-      return false; // debio ser aceptado
-    return true;
+  // POSER / MALL GRABBER: Must Reject.
+  if (role == "POSER" || role == "MALL GRABBER") {
+    return !decision;
   }
 
-  if (nivelActual == 3) { // Nivel 3
-    if (decision && calcularEdad(p.obtenerFechaNac()) < 18 &&
-        p.obtenerViajaSolo())
-      return false;
-    if (decision && p.getTipoPersona() == nivelConfig.tipoPersonaRechazar &&
-        p.obtenerViajaSolo())
-      return false;
-    if (decision && p.obtenerTipoV() == nivelConfig.tipoVisitaRestringido &&
-        p.obtenerDuracion() < nivelConfig.duracionMaximaEstancia)
-      return false;
-
-    if (!decision &&
-        !(calcularEdad(p.obtenerFechaNac()) < 18 && p.obtenerViajaSolo()) &&
-        !(p.getTipoPersona() == nivelConfig.tipoPersonaRechazar &&
-          p.obtenerViajaSolo()) &&
-        !(p.obtenerTipoV() == nivelConfig.tipoVisitaRestringido &&
-          p.obtenerDuracion() < nivelConfig.duracionMaximaEstancia))
-      return false; // debio ser aceptado
-    return true;
+  // LOCAL LEGEND: Must Accept (Always).
+  if (role == "LOCAL LEGEND") {
+    return decision;
   }
 
-  if (nivelActual == 4) { // Nivel 4
-    if (decision && p.getTipoPersona() == nivelConfig.tipoPersonaRechazar &&
-        !p.obtenerDocumentacionValida())
-      return false;
-    if (decision && p.getTipoPersona() == nivelConfig.tipoPersonaRechazar &&
-        p.obtenerMotivo() == nivelConfig.motivoViajeRestringido)
-      return false;
-    for (const auto &pais : paisesGuerra) {
-      if (decision &&
-          (p.obtenerNacionalidad() == pais || p.obtenerPaisResi() == pais))
-        return false;
-    }
+  // 2. Reglas del Nivel (Para AMATEUR, PRO, FILMER, GROM, SPONSEE)
 
-    if (!decision && p.getTipoPersona() != nivelConfig.tipoPersonaRechazar &&
-        p.obtenerDocumentacionValida() &&
-        p.getTipoPersona() != nivelConfig.tipoPersonaRechazar &&
-        p.obtenerMotivo() != nivelConfig.motivoViajeRestringido) {
-      bool inWarCountry = false;
-      for (const auto &pais : paisesGuerra) {
-        if (p.obtenerNacionalidad() == pais || p.obtenerPaisResi() == pais) {
-          inWarCountry = true;
-          break;
-        }
-      }
-      if (!inWarCountry)
-        return false; // debio ser aceptado
-    }
-    return true;
-  }
-  if (nivelActual == 5) { // Nivel 5
-    if (decision && p.obtenerTipoV() == nivelConfig.tipoVisitaRestringido &&
-        p.obtenerDuracion() > nivelConfig.duracionMaximaEstancia)
-      return false;
-    if (decision && p.getTipoPersona() == nivelConfig.tipoPersonaRechazar &&
-        !p.obtenerDocumentacionValida())
-      return false;
-    if (decision && p.getTipoPersona() == nivelConfig.tipoPersonaRechazar &&
-        p.obtenerMotivo() == nivelConfig.motivoViajeRestringido)
-      return false;
-    for (const auto &paisGuerra : paisesGuerra) {
-      if (decision && (p.obtenerNacionalidad() == paisGuerra ||
-                       p.obtenerPaisResi() == paisGuerra))
-        return false;
-    }
-    if (decision && p.obtenerDuracion() < nivelConfig.duracionMaximaEstancia &&
-        p.obtenerMotivo() == nivelConfig.motivoViajeRestringido)
-      return false;
-    if (decision && p.obtenerECivil() == nivelConfig.estadoAmor &&
-        p.obtenerViajaSolo())
-      return false;
-    if (decision && calcularEdad(p.obtenerFechaNac()) < nivelConfig.edad &&
-        p.obtenerViajaSolo())
-      return false;
-    if (decision && calcularEdad(p.obtenerFechaNac()) > 40 &&
-        p.obtenerMotivo() == nivelConfig.motivoViajeRestringido)
-      return false;
+  bool shouldReject = false;
 
-    if (!decision &&
-        !(p.obtenerTipoV() == nivelConfig.tipoVisitaRestringido &&
-          p.obtenerDuracion() > nivelConfig.duracionMaximaEstancia) &&
-        p.getTipoPersona() != nivelConfig.tipoPersonaRechazar &&
-        p.obtenerDocumentacionValida()) {
-      bool inWarCountry = false;
-      for (const auto &pais : paisesGuerra) {
-        if (p.obtenerNacionalidad() == pais || p.obtenerPaisResi() == pais) {
-          inWarCountry = true; // aca basicamente evaluo los paises en guerra
-          break;
-        }
-      }
-      if (!inWarCountry &&
-          !(p.obtenerDuracion() < nivelConfig.duracionMaximaEstancia &&
-            p.obtenerMotivo() == nivelConfig.motivoViajeRestringido))
-        return false; // se debio aceptar
-    }
-    return true;
+  // Check Crew / Banned Crews
+  if (p.getCrew() == nivelConfig.bannedCrewStruct)
+    shouldReject = true; // mapped from nacionalidadStruct
+
+  // Check against vector of banned crews
+  for (const auto &banned : nivelConfig.bannedCrews) {
+    if (p.getCrew() == banned)
+      shouldReject = true;
   }
-  return true; // Si no hay condiciones de falla
+  // Also check global banned crews list if still used, but LevelConfig bans
+  // are key.
+  for (const auto &banned : bannedCrews) {
+    if (p.getCrew() == banned)
+      shouldReject = true;
+  }
+
+  // Check Brand
+  for (const auto &banned : nivelConfig.bannedBrands) {
+    if (p.getBrand() == banned)
+      shouldReject = true;
+  }
+  if (!nivelConfig.bannedBrandStruct.empty() &&
+      p.getBrand() == nivelConfig.bannedBrandStruct)
+    shouldReject = true;
+
+  // Check Stance
+  for (const auto &banned : nivelConfig.bannedStances) {
+    if (p.getStance() == banned)
+      shouldReject = true;
+  }
+
+  // Check Style
+  for (const auto &banned : nivelConfig.bannedStyles) {
+    if (p.getSkateStyle() == banned)
+      shouldReject = true;
+  }
+
+  // Check Deck Condition
+  for (const auto &banned : nivelConfig.bannedDeckConditions) {
+    if (p.getDeckCondition() == banned)
+      shouldReject = true;
+  }
+
+  // Check Role
+  for (const auto &banned : nivelConfig.bannedRoles) {
+    if (p.getRole() == banned)
+      shouldReject = true;
+  }
+
+  // Check Goal
+  for (const auto &banned : nivelConfig.bannedGoals) {
+    if (p.getSessionGoal() == banned)
+      shouldReject = true;
+  }
+
+  // Check Duration
+  if (nivelConfig.duracionMaximaEstancia > 0 &&
+      p.getSessionDuration() > nivelConfig.duracionMaximaEstancia)
+    shouldReject = true;
+
+  // Check Documentation (Siempre requerida valida salvo para leyendas que
+  // ya pasaron)
+  if (!p.getHasValidID())
+    shouldReject = true;
+
+  // Check Age (Min/Max?)
+  // Let's assume nivelConfig.edad is a "Min Age for Solo Session"
+  if (nivelConfig.edad > 0 &&
+      calcularEdad(p.getBirthDate()) < nivelConfig.edad) {
+    // Skater kids usually skate together or with parents.
+    // Let's say if Age < ConfigAge (e.g. 16) and NO HELMET -> Reject.
+    if (!p.getHasHelmet())
+      shouldReject = true;
+  }
+
+  // 3. Resultado Final
+  // If shouldReject is true, Correct Decision is False (Deny).
+  // If shouldReject is false, Correct Decision is True (Allow).
+
+  if (shouldReject) {
+    return !decision;
+  } else {
+    return decision;
+  }
 }
+
 void Juego::aceptarPersona() {
   if (indicePersonaActual < personas.size()) {
     const Persona &p = personas[indicePersonaActual];
     bool decisionCorrecta = evaluarDecision(p, true);
-    int error;
+
     if (decisionCorrecta) {
-      control.incrementarPuntos(puntosPorTipo[p.getTipoPersona()]);
-      resultadoLabel->setText("Aceptaste correctamente a la persona.");
+      vibeCheck.increaseReputation(puntosPorTipo[p.getRole()]);
+      resultadoLabel->setText("¡Aceptado! Keep rollin'.");
       sonidoCorrecto.play();
-      // Registrar la decisión correcta
       logger.log(QString("Aceptar: %1 (%2). Correcto.")
-                     .arg(QString::fromStdString(p.obtenerNombreApellido()))
-                     .arg(QString::fromStdString(p.getTipoPersona())));
+                     .arg(QString::fromStdString(p.getName()))
+                     .arg(QString::fromStdString(p.getRole())));
     } else {
-      control.incrementarPuntos(-puntosPorTipo[p.getTipoPersona()]);
+      // Pena por error
+      int pena = -10; // Default penalty
+      if (p.getRole() == "SUIT")
+        pena = -100;
+      if (p.getRole() == "POSER")
+        pena = -50;
+
+      vibeCheck.increaseReputation(pena);
       errores++;
-      resultadoLabel->setText("Debiste rechazar a esta persona.");
+      resultadoLabel->setText("¡Error! Debiste rechazar.");
       sonidoError.play();
-      // Registrar la decisión incorrecta
-      logger.log(
-          QString("Aceptar: %1 (%2). Incorrecto: debería haber rechazado.")
-              .arg(QString::fromStdString(p.obtenerNombreApellido()))
-              .arg(QString::fromStdString(p.getTipoPersona())));
+      logger.log(QString("Aceptar: %1 (%2). Incorrecto.")
+                     .arg(QString::fromStdString(p.getName()))
+                     .arg(QString::fromStdString(p.getRole())));
     }
-    puntosLabel->setText("Puntos: " + QString::number(control.getPuntos()));
+
+    puntosLabel->setText("Reputación: " +
+                         QString::number(vibeCheck.getReputation()));
     erroresLabel->setText("Errores: " + QString::number(errores));
 
     indicePersonaActual++;
     personasProcesadasNivel++;
 
     if (errores >= nivelConfig.maxFallosPermitidos) {
-      finJuego("Has cometido demasiados errores. Fin del juego.");
+      finJuego("Demasiados Posers entraron. El spot fue quemado. Fin del "
+               "juego.");
       return;
     }
 
     if (personasProcesadasNivel >= nivelConfig.cantidadPersonas) {
       nivelActual++;
       if (nivelActual > 5) {
-        finJuego("Has completado todos los niveles.");
+        finJuego("¡Has protegido Skatetopia! Eres una leyenda.");
         return;
       } else {
         cargarConfiguracionNivel(nivelActual);
@@ -1090,12 +1022,8 @@ void Juego::aceptarPersona() {
         indicePersonaActual = 0;
         errores = 0;
         QMessageBox::information(mainWindow, "Nivel Completado",
-                                 "Has pasado al nivel " +
+                                 "Nivel Desbloqueado: " +
                                      QString::number(nivelActual));
-        // Registrar el cambio de nivel
-        logger.log(QString("Nivel %1 completado. Pasando al nivel %2.")
-                       .arg(nivelActual - 1)
-                       .arg(nivelActual));
         mostrarRestricciones();
       }
     }
@@ -1108,41 +1036,47 @@ void Juego::rechazarPersona() {
   if (indicePersonaActual < personas.size()) {
     const Persona &p = personas[indicePersonaActual];
     bool decisionCorrecta = evaluarDecision(p, false);
-    int err;
+
     if (decisionCorrecta) {
-      control.incrementarPuntos(puntosPorTipo[p.getTipoPersona()]);
-      resultadoLabel->setText("Rechazaste correctamente a la persona.");
+      // Si rechazas correctamente a un Poser/Suit, ganas puntos?
+      // O solo no pierdes?
+      // Old logic: +puntos if correct.
+      // Si era Poser y rechazaste -> Correcto -> +Puntos (e.g. 10 base +
+      // bonus?) Use standard points usually positive for correct actions.
+      vibeCheck.increaseReputation(20);
+
+      resultadoLabel->setText("¡Rechazado! Bien hecho.");
       sonidoCorrecto.play();
-      // registrar la decisión correcta
       logger.log(QString("Rechazar: %1 (%2). Correcto.")
-                     .arg(QString::fromStdString(p.obtenerNombreApellido()))
-                     .arg(QString::fromStdString(p.getTipoPersona())));
+                     .arg(QString::fromStdString(p.getName()))
+                     .arg(QString::fromStdString(p.getRole())));
     } else {
-      control.incrementarPuntos(-puntosPorTipo[p.getTipoPersona()]);
+      // Rechazaste a alguien que debia entrar (ej. Legend)
+      vibeCheck.increaseReputation(-20);
       errores++;
-      resultadoLabel->setText("Debiste aceptar a esta persona.");
+      resultadoLabel->setText("¡Error! Ese era real. Debiste aceptar.");
       sonidoError.play();
-      // registrar la decisión incorrecta
-      logger.log(
-          QString("Rechazar: %1 (%2). Incorrecto: debería haber aceptado.")
-              .arg(QString::fromStdString(p.obtenerNombreApellido()))
-              .arg(QString::fromStdString(p.getTipoPersona())));
+      logger.log(QString("Rechazar: %1 (%2). Incorrecto.")
+                     .arg(QString::fromStdString(p.getName()))
+                     .arg(QString::fromStdString(p.getRole())));
     }
-    puntosLabel->setText("Puntos: " + QString::number(control.getPuntos()));
+
+    puntosLabel->setText("Reputación: " +
+                         QString::number(vibeCheck.getReputation()));
     erroresLabel->setText("Errores: " + QString::number(errores));
 
     indicePersonaActual++;
     personasProcesadasNivel++;
 
     if (errores >= nivelConfig.maxFallosPermitidos) {
-      finJuego("Has cometido demasiados errores. Fin del juego.");
+      finJuego("Demasiados errores. Tu reputación cayó. Fin del juego.");
       return;
     }
 
     if (personasProcesadasNivel >= nivelConfig.cantidadPersonas) {
       nivelActual++;
-      if (nivelActual > obtenerNumeroNiveles()) {
-        finJuego("Has completado todos los niveles.");
+      if (nivelActual > 5) {
+        finJuego("¡Has protegido Skatetopia! Eres una leyenda.");
         return;
       } else {
         cargarConfiguracionNivel(nivelActual);
@@ -1151,12 +1085,8 @@ void Juego::rechazarPersona() {
         indicePersonaActual = 0;
         errores = 0;
         QMessageBox::information(mainWindow, "Nivel Completado",
-                                 "Has pasado al nivel " +
+                                 "Nivel Desbloqueado: " +
                                      QString::number(nivelActual));
-        // Registrar el cambio de nivel
-        logger.log(QString("Nivel %1 completado. Pasando al nivel %2.")
-                       .arg(nivelActual - 1)
-                       .arg(nivelActual));
         mostrarRestricciones();
       }
     }
@@ -1165,44 +1095,54 @@ void Juego::rechazarPersona() {
 }
 
 void Juego::verificarPaisRestringido() {
-  if (nivelActual >= 3 && verificacionesRestantes > 0) {
+  if (nivelActual >= 1 && verificacionesRestantes >
+                              0) { // Available from Level 1 now for Crew Check
     const Persona &p = personas[indicePersonaActual];
     verificacionesRestantes--;
 
-    if (p.obtenerPaisRestringido()) {
-      resultadoLabel->setText("La persona viene de un país restringido.");
-      // Registrar la verificación
-      logger.log(QString("Verificación: %1 viene de un país restringido.")
-                     .arg(QString::fromStdString(p.obtenerNombreApellido())));
+    // Check if crew is banned
+    bool isBanned = false;
+    for (const auto &banned : bannedCrews) {
+      if (p.getCrew() == banned)
+        isBanned = true;
+    }
+    // Also check LevelConfig specific bans
+    if (p.getCrew() == nivelConfig.bannedCrewStruct)
+      isBanned = true;
+    for (int i = 0; i < 4; i++) {
+      if (!nivelConfig.bannedCrews[i].empty() &&
+          p.getCrew() == nivelConfig.bannedCrews[i])
+        isBanned = true;
+    }
+
+    if (isBanned || p.getIsBannedCrew()) {
+      resultadoLabel->setText("ALERTA: Crew en Lista Negra.");
+      logger.log(QString("Verificación: Crew %1 Baneada.")
+                     .arg(QString::fromStdString(p.getCrew())));
     } else {
-      resultadoLabel->setText("La persona no viene de un país restringido.");
-      // Registrar la verificación
-      logger.log(QString("Verificación: %1 no viene de un país restringido.")
-                     .arg(QString::fromStdString(p.obtenerNombreApellido())));
+      resultadoLabel->setText("Crew limpia.");
+      logger.log(QString("Verificación: Crew %1 Limpia.")
+                     .arg(QString::fromStdString(p.getCrew())));
     }
   } else {
-    resultadoLabel->setText("No tienes más verificaciones disponibles.");
+    resultadoLabel->setText("No tienes más verificaciones.");
   }
 }
 
 void Juego::verificarDocumentacion() {
-  if (nivelActual >= 3 && verificacionesRestantes > 0) {
+  if (nivelActual >= 1 && verificacionesRestantes > 0) {
     const Persona &p = personas[indicePersonaActual];
     verificacionesRestantes--;
 
-    if (p.obtenerDocumentacionValida()) {
-      resultadoLabel->setText("La documentación es válida.");
-      // registrar la verificación
-      logger.log(QString("Verificación: %1 tiene documentación válida.")
-                     .arg(QString::fromStdString(p.obtenerNombreApellido())));
+    if (p.getHasValidID()) {
+      resultadoLabel->setText("ID Check: VALID (Vibe passed).");
+      logger.log("Verificación: Valid ID.");
     } else {
-      resultadoLabel->setText("La documentación no es válida.");
-      // registrar la verificación
-      logger.log(QString("Verificación: %1 tiene documentación inválida.")
-                     .arg(QString::fromStdString(p.obtenerNombreApellido())));
+      resultadoLabel->setText("ID Check: FAKE / EXPIRED (Poser).");
+      logger.log("Verificación: Invalid ID.");
     }
   } else {
-    resultadoLabel->setText("No tienes más verificaciones disponibles.");
+    resultadoLabel->setText("No tienes más verificaciones.");
   }
 }
 int Juego::obtenerNumeroNiveles() {
@@ -1221,11 +1161,11 @@ void Juego::saveGame(const QString &filename) {
   QDataStream out(&file);
   out.setVersion(QDataStream::Qt_5_15); // Asegurar compatibilidad
 
-  // Guardar ControlFronterizo
-  control.serialize(out);
+  // Guardar VibeCheck (antes ControlFronterizo)
+  vibeCheck.serialize(out);
 
-  // Guardar NivelActual, Errores, IndicePersonaActual, PersonasProcesadasNivel,
-  // VerificacionesRestantes
+  // Guardar NivelActual, Errores, IndicePersonaActual,
+  // PersonasProcesadasNivel, VerificacionesRestantes
   out << nivelActual << errores << indicePersonaActual
       << personasProcesadasNivel << verificacionesRestantes;
 
@@ -1259,11 +1199,11 @@ void Juego::loadGame(const QString &filename) {
   }
   QDataStream in(&file);
   in.setVersion(QDataStream::Qt_5_15);
-  // Cargar ControlFronterizo
-  control.deserialize(in);
+  // Cargar VibeCheck
+  vibeCheck.deserialize(in);
 
-  // Cargar NivelActual, Errores, IndicePersonaActual, PersonasProcesadasNivel,
-  // VerificacionesRestantes
+  // Cargar NivelActual, Errores, IndicePersonaActual,
+  // PersonasProcesadasNivel, VerificacionesRestantes
   in >> nivelActual >> errores >> indicePersonaActual >>
       personasProcesadasNivel >> verificacionesRestantes;
 
@@ -1294,7 +1234,8 @@ void Juego::loadGame(const QString &filename) {
 
   // Actualizar UI
   nivelLabel->setText("Nivel: " + QString::number(nivelActual));
-  puntosLabel->setText("Puntos: " + QString::number(control.getPuntos()));
+  puntosLabel->setText("Reputación: " +
+                       QString::number(vibeCheck.getReputation()));
   erroresLabel->setText("Errores: " + QString::number(errores));
 
   mostrarPersonaActual();

@@ -1,5 +1,7 @@
-Nivel 3, cantidad de personas a atender: [6]
-1-Si es menor de edad y viaja solo no dejar pasar.
-2-Si el tipo de persona es [REFUGIADO] y viaja solo, rechazar.
-3-Si el tipo de viaje es [Estudios] y la duracion es menor a [4] semanas rechazar.
+Nivel 3, cCantidad de skaters: [7]
+Regla especial: Hoy no queremos lios.
+Rol prohibido (No babysitting): [GROM]
+Objetivo prohibido (Spot peligroso): [Learning Tricks] Duracion max: [3]
+Maximo de errores: [2]
+es menor a [4] semanas rechazar.
 4-Puedes fallar [2] veces.

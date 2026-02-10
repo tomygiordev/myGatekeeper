@@ -1,4 +1,5 @@
-Nivel 1, cantidad de personas a atender: [4].
-1-Si el tipo de visita es [Trabajo] no dejar pasar.
-2-Si la duracion de estancia es mayor a [4] semanas no dejar pasar.
+Nivel 1, cCantidad de skaters para hoy: [5]
+Objetivo de sesion prohibido (No se permiten posers grabando): [Filming Part]
+Duracion maxima de sesion permitida (horas): [4]
+Maximo de errores permitidos (No quemes el spot): [2]
 3-Puedes fallar [2] veces.

@@ -21,21 +21,19 @@
 #include <unordered_set>
 #include <vector>
 
-
-#include "ControlFronterizo.h"
 #include "LevelConfig.h"
 #include "Logger.h"
 #include "Persona.h"
-
+#include "VibeCheck.h"
 
 using namespace std;
 
 class Juego : public QObject {
   Q_OBJECT
 private:
-  ControlFronterizo control;
+  VibeCheck vibeCheck;
   vector<Persona> personas;
-  vector<string> paisesGuerra;
+  vector<string> bannedCrews; // Antes paisesGuerra
   int nivelActual = 1;
   int errores;
   int indicePersonaActual;
@@ -86,10 +84,13 @@ private:
   unordered_set<string> nombresUsados;
   unordered_set<QString> imagenesUsadas;
   // Listas para randomización
-  vector<string> listaPaisesAmerica;
-  vector<string> listaEstadosCiviles;
-  vector<string> listaMotivosViaje;
-  vector<string> listaTiposVisita;
+  vector<string> listaCrews;          // Antes listaPaisesAmerica
+  vector<string> listaStances;        // Antes listaEstadosCiviles
+  vector<string> listaSkateStyles;    // Antes listaMotivosViaje
+  vector<string> listaSessionGoals;   // Antes listaTiposVisita
+  vector<string> listaBrands;         // Nuevo (marcas)
+  vector<string> listaDeckConditions; // Nuevo (estado tabla)
+
   // Acumulación de restricciones
   vector<string> restriccionesAcumuladas;
   // Generador de números aleatorios
@@ -111,6 +112,7 @@ public:
   void cargarConfiguracionNivel(int nivel);
   void cargarPersonasNivel(int nivel);
   void mostrarPersonaActual();
+  void mostrarResultadoNivel();
   string generarFechaAleatoria();
   int calcularEdad(const string &fechaNac);
   void cargarProgreso();

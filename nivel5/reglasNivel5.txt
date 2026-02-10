@@ -1,8 +1,13 @@
-Nivel 5, cantidad de personas a atender: [7]
-1-Si el tipo de visita es [Turismo] y la duración de la estancia es mayor a [4] semanas, rechazar.
-2-Si la persona es de tipo [DIPLOMATICO] y tiene documentación no válida, no dejar pasar.
-3-Si la persona es de tipo [ALDEANO] y su motivo de viaje es [Evento Deportivo], rechazar.
-4-Si la persona tiene una nacionalidad o residencia en un país en guerra, no dejar pasar.
+Nivel 5, cCantidad de skaters: [10]
+Objetivo/Duracion Max: [Photo Shoot], [5]
+Rol prohibido: [GROM]
+Rol/Estilo: [AMATEUR], [Vert]
+Crew/Marca: [Vibe Checkers], [Walmart]
+Duracion/Estilo: [5], [Downhill]
+Stance Prohibido (Absoluto): [Mongo]
+Edad Minima: [16]
+Edad Maxima para Street: [40], [Street]
+Maximo de errores: [1]
 5-Si la duración de la estancia es menor a [4] semanas y el motivo de viaje es [Vacaciones], rechazar.
 6-Si el estado civil es [Casado] y la persona viaja sola, rechazar.
 7-Si la persona tiene una edad menor a [18] años y está viajando sola, no dejar pasar.

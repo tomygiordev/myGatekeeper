@@ -1,5 +1,8 @@
-Nivel 2, cantidad de personas a atender: [5]
-1-Si el tipo de visita es [Negocios] y la duracion de estancia es mayor a [2], rechazar.
-2-Si la nacionalidad de la persona es [Chile] no dejar pasar.
+Nivel 2, cCantidad de skaters: [6]
+Evitar objetivo [Competition] si se quedan mas de [6] horas (Demasiado tryhard)
+Marca prohibida (Poser Brand): [Zumiez]
+Estilo prohibido (Peligroso hoy): [Downhill]
+Maximo de errores: [2]
+Chile] no dejar pasar.
 3-Si el motivo de viaje es [Investigacion], rechazar.
 4-Puedes fallar [2] veces.

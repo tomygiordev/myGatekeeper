@@ -21,7 +21,8 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
-    ControlFronterizo.cpp ControlFronterizo.h
+    VibeCheck.cpp
+    VibeCheck.h
     Juego.cpp Juego.h
     LevelConfig.cpp LevelConfig.h
     Logger.cpp Logger.h
