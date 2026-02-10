@@ -21,7 +21,11 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
-
+    ControlFronterizo.cpp ControlFronterizo.h
+    Juego.cpp Juego.h
+    LevelConfig.cpp LevelConfig.h
+    Logger.cpp Logger.h
+    Persona.cpp Persona.h
 )
 
 # Configuración para agregar el ejecutable en función de la versión de Qt
