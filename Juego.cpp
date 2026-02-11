@@ -107,18 +107,21 @@ void Juego::configurarUI() {
   mainWindow->setCentralWidget(stackedWidget);
 
   // Establecer tamaño fijo para la ventana y prevenir redimensionamiento
-  mainWindow->setFixedSize(1024, 768);
+  mainWindow->setWindowFlags(Qt::Window | Qt::CustomizeWindowHint |
+                             Qt::WindowTitleHint | Qt::WindowSystemMenuHint |
+                             Qt::WindowMinimizeButtonHint |
+                             Qt::WindowCloseButtonHint);
+  mainWindow->showMaximized();
   // Menú de inicio
   menuInicioWidget = new QWidget();
 
   // Configura el fondo del menú de inicio
   menuInicioWidget->setStyleSheet(
-      "QWidget {"
-      "    background-image: url(':/otros/menu.png');"
-      "    background-repeat: no-repeat;"
-      "    background-position: center;"
-      "    background-size: cover;"
+      "QWidget#menuInicioWidget {"
+      "    border-image: url(':/otros/background_mygate.png') 0 0 0 0 stretch "
+      "stretch;"
       "}");
+  menuInicioWidget->setObjectName("menuInicioWidget");
 
   QVBoxLayout *menuLayout = new QVBoxLayout(menuInicioWidget);
 
@@ -188,7 +191,6 @@ void Juego::configurarUI() {
       /* --- ACTION BUTTONS (Overrides) --- */
       /* These will be set specifically by ID or object name later */
   )";
-  mainWindow->setStyleSheet(globalStyle);
 
   // --- RESTORING MISSING MENU LAYOUT LOGIC ---
   // Estilizar botones del menú de inicio (QSS handled globally now, but sizes
@@ -428,13 +430,10 @@ void Juego::configurarUI() {
       QSoundEffect::Infinite); // Loops infinitos para ambiente
 
   reglasWidget->setStyleSheet(
-      "QWidget {"
-      "    background-image: url(':/otros/menuReglas.png');"
-      "    background-repeat: no-repeat;"
-      "    background-position: center;"
-      "    background-size: cover;" // Asegura que la imagen cubra todo el
-                                    // widget
+      "QWidget#reglasWidget {"
+      "    border-image: url(':/otros/menuReglas.png') 0 0 0 0 stretch stretch;"
       "}");
+  reglasWidget->setObjectName("reglasWidget");
 }
 
 QString Juego::obtenerReglasDelJuego() {

@@ -3,13 +3,9 @@
         <file>otros/background.png</file>
         <file>otros/hombreNombre.txt</file>
         <file>otros/menu.png</file>
+        <file>otros/background_mygate.png</file>
         <file>otros/menuReglas.png</file>
         <file>otros/mujerNombre.txt</file>
         <file>otros/apellidos.txt</file>
-        <file>nivel1/reglasNivel1.txt</file>
-        <file>nivel2/reglasNivel2.txt</file>
-        <file>nivel3/reglasNivel3.txt</file>
-        <file>nivel4/reglasNivel4.txt</file>
-        <file>nivel5/reglasNivel5.txt</file>
     </qresource>
 </RCC>
