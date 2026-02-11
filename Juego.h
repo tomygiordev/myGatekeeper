@@ -40,8 +40,9 @@ private:
   int personasProcesadasNivel;
   int verificacionesRestantes;
   unordered_map<string, int> puntosPorTipo;
-  QString acumularReglas;
+  QString acumularReglas; // **Reglas del nivel actual**
   // Configuración del nivel
+  QString lastRejectionReason; // **Razon del ultimo rechazo para debug**
   LevelConfig nivelConfig;
   // Registro de eventos
   vector<string> registroEventos;
@@ -78,6 +79,7 @@ private:
   // Listas de nombres y rutas de imágenes
   vector<string> nombresHombres;
   vector<string> nombresMujeres;
+  vector<string> apellidos; // Nuevo vector para apellidos
   vector<QString> imagenesHombres;
   vector<QString> imagenesMujeres;
   // Conjuntos para evitar repeticiones

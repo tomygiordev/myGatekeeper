@@ -99,6 +99,8 @@ void Juego::inicializarListas() {
   listaDeckConditions = {"Fresh", "Used", "Thrashed", "Snapped", "Focus"};
 }
 
+// ... (existing includes)
+
 void Juego::configurarUI() {
   // Crear StackWidget para manejar diferentes pantallas
   stackedWidget = new QStackedWidget(mainWindow);
@@ -126,206 +128,240 @@ void Juego::configurarUI() {
       new QPushButton("Cargar Partida"); // **Nuevo botón para cargar partida**
   salirButton = new QPushButton("Salir");
 
-  // Estilizar botones del menú de inicio
-  QString botonMenuEstilo =
-      "QPushButton {"
-      "   background-color: #4CAF50;" // Verde suave
-      "   background: #4CAF50;"       // Forzar color de fondo
-      "   color: white;"
-      "   font-size: 18px;"
-      "   padding: 10px;"
-      "   border-radius: 8px;"
-      "   border: none;" // Remover bordes por defecto
-      "}"
-      "QPushButton:hover {"
-      "   background-color: #45A049;" // Verde un poco más oscuro en hover
-      "   background: #45A049;"       // Forzar color de fondo en hover
-      "}"
-      "QPushButton:pressed {"
-      "   background-color: #388E3C;" // Verde oscuro para el estado presionado
-      "   background: #388E3C;"
-      "}";
-  jugarButton->setStyleSheet(botonMenuEstilo);
-  reglasButton->setStyleSheet(botonMenuEstilo);
-  cargarPartidaButton->setStyleSheet(
-      botonMenuEstilo); // **Estilo para cargar partida**
-  salirButton->setStyleSheet(botonMenuEstilo);
-  // Ajustar tamaños de los botones
+  // --- GLOBAL SKATER STYLE QSS ---
+  // Palette:
+  // Background: #1a1a1a (Dark Grey/Black)
+  // Accent Green: #39FF14 (Neon Green)
+  // Accent Pink: #FF007F (Hot Pink)
+  // Accent Cyan: #00FFFF (Cyan)
+  // Text: White / Black for contrast
+
+  QString globalStyle = R"(
+      QMainWindow {
+          background-color: #1a1a1a;
+      }
+      QWidget {
+          font-family: 'Segoe UI', Impact, sans-serif;
+          font-size: 14px;
+          color: #eee;
+      }
+      /* --- LABELS (Stats & Titles) --- */
+      QLabel {
+          color: #00FFFF;
+          font-weight: bold;
+          font-size: 16px;
+          background: transparent;
+      }
+      
+      /* --- TEXT INFO PANEL (The Clipboard) --- */
+      QTextEdit {
+          background-color: #f0f0f0;
+          color: #111;
+          border: 4px solid #333;
+          border-radius: 2px;
+          font-family: 'Courier New', monospace;
+          font-weight: bold;
+          padding: 10px;
+          selection-background-color: #FF007F;
+          /* Texture effect simulated with color */
+      }
+
+      /* --- BUTTONS (Stickers) --- */
+      QPushButton {
+          background-color: #222;
+          color: white;
+          border: 3px solid #555;
+          border-radius: 5px;
+          padding: 8px;
+          font-weight: bold;
+          text-transform: uppercase;
+      }
+      QPushButton:hover {
+          background-color: #333;
+          border-color: #00FFFF; /* Cyan glow */
+      }
+      QPushButton:pressed {
+          background-color: #000;
+          border-color: #FF007F;
+      }
+
+      /* --- ACTION BUTTONS (Overrides) --- */
+      /* These will be set specifically by ID or object name later */
+  )";
+  mainWindow->setStyleSheet(globalStyle);
+
+  // --- RESTORING MISSING MENU LAYOUT LOGIC ---
+  // Estilizar botones del menú de inicio (QSS handled globally now, but sizes
+  // needed)
   jugarButton->setFixedSize(200, 50);
   reglasButton->setFixedSize(200, 50);
-  cargarPartidaButton->setFixedSize(200, 50); // **Tamaño para cargar partida**
+  cargarPartidaButton->setFixedSize(200, 50);
   salirButton->setFixedSize(200, 50);
+
   // Agregar botones al layout con espacio
   menuLayout->addStretch();
   menuLayout->addWidget(jugarButton, 0, Qt::AlignCenter);
-  menuLayout->addSpacing(20); // Espacio entre botones
+  menuLayout->addSpacing(20);
   menuLayout->addWidget(reglasButton, 0, Qt::AlignCenter);
-  menuLayout->addSpacing(20); // Espacio entre botones
-  menuLayout->addWidget(cargarPartidaButton, 0,
-                        Qt::AlignCenter); // **Agregar botón de cargar partida**
-  menuLayout->addSpacing(20);             // Espacio entre botones
+  menuLayout->addSpacing(20);
+  menuLayout->addWidget(cargarPartidaButton, 0, Qt::AlignCenter);
+  menuLayout->addSpacing(20);
   menuLayout->addWidget(salirButton, 0, Qt::AlignCenter);
   menuLayout->addStretch();
-  // Pantalla de reglas
+
+  // --- RESTORING MISSING REGLAS WIDGET LOGIC ---
   reglasWidget = new QWidget();
   QVBoxLayout *reglasLayout = new QVBoxLayout(reglasWidget);
 
   QTextEdit *reglasTexto = new QTextEdit();
   reglasTexto->setReadOnly(true);
   reglasTexto->setText(obtenerReglasDelJuego());
+  // Override style for rules specifically if needed, or rely on global
   reglasTexto->setStyleSheet(
-      "font-size: 16px; padding: 10px; background-color: white;");
+      "font-size: 16px; padding: 10px; background-color: #eee; color: #111;");
+
   volverButton = new QPushButton("Volver al Menú");
-  // Estilizar botón de volver
-  volverButton->setFixedSize(150, 40);
-  volverButton->setStyleSheet(botonMenuEstilo);
+  volverButton->setFixedSize(200, 50);
+
   reglasLayout->addWidget(reglasTexto);
   reglasLayout->addSpacing(10);
   reglasLayout->addWidget(volverButton, 0, Qt::AlignCenter);
+
   // Pantalla de juego
   QWidget *juegoWidget = new QWidget();
   layout = new QVBoxLayout(juegoWidget);
-  // Etiquetas de información
+
+  // --- TOP BAR (Stats) ---
   nivelLabel = new QLabel("Nivel: 1");
   puntosLabel = new QLabel("Reputación: 0");
   erroresLabel = new QLabel("Errores: 0");
-  resultadoLabel = new QLabel("Resultado:");
+
+  // Custom Style for Top Stats: "Tape" look
+  QString tapeStyle = "background-color: #000; color: #39FF14; padding: 5px "
+                      "15px; border: 2px dashed #39FF14; border-radius: 0px;";
+  nivelLabel->setStyleSheet(tapeStyle);
+  puntosLabel->setStyleSheet(tapeStyle);
+  erroresLabel->setStyleSheet("background-color: #000; color: #FF007F; "
+                              "padding: 5px 15px; border: 2px dashed #FF007F;");
+
+  QHBoxLayout *topBar = new QHBoxLayout();
+  topBar->addWidget(nivelLabel);
+  topBar->addWidget(puntosLabel);
+  topBar->addWidget(erroresLabel);
+
+  // --- MAIN CONTENT (Split View) ---
+  QHBoxLayout *centerLayout = new QHBoxLayout();
+
+  // Left Panel: Image
   imagenPersonaLabel = new QLabel();
+  imagenPersonaLabel->setFixedSize(300, 300);
+  imagenPersonaLabel->setAlignment(Qt::AlignCenter);
+  // Polaroids style border
+  imagenPersonaLabel->setStyleSheet(
+      "border: 10px solid white; border-bottom: 40px solid white; "
+      "background-color: #111; color: #555;");
+  imagenPersonaLabel->setText("SIN FOTO"); // Default text
+
+  // Right Panel: Info (Clipboard style)
   personaInfo = new QTextEdit();
   personaInfo->setReadOnly(true);
-  // Establecer la imagen de fondo
-  juegoWidget->setStyleSheet(
-      "QWidget {"
-      "    background-image: url(':/otros/background.png');"
-      "    background-repeat: no-repeat;"
-      "    background-position: center;"
-      "    background-size: contain;" // Cambia aquí
-      "    background-color: white;"  // Fondo sólido detrás de la imagen
-      "}");
-
-  // Configurar QLabel para la imagen del personaje
-  imagenPersonaLabel->setFixedSize(250, 250); // Tamaño aumentado
-  imagenPersonaLabel->setAlignment(Qt::AlignCenter);
-  // Opcional: Puedes agregar un marco para mejor visualización
-  imagenPersonaLabel->setStyleSheet(
-      "QLabel { border: 2px solid black; background-color: white; }");
-  // Estilizar etiquetas
-  QString etiquetaEstilo = "QLabel { font-size: 16px; background-color: "
-                           "transparent; color: black; }";
-  nivelLabel->setStyleSheet(etiquetaEstilo);
-  puntosLabel->setStyleSheet(etiquetaEstilo);
-  erroresLabel->setStyleSheet(etiquetaEstilo);
-  resultadoLabel->setStyleSheet(
-      "QLabel { font-size: 18px; font-weight: bold; background-color: "
-      "transparent; color: black; }");
-  personaInfo->setStyleSheet(
-      "QTextEdit { font-size: 14px; background-color: white; }");
-  // Botones de acción
-  aceptarButton = new QPushButton("Aceptar");
-  rechazarButton = new QPushButton("Rechazar");
-  verRestriccionesButton = new QPushButton("Ver Restricciones");
-  verificarPaisRestringidoButton =
-      new QPushButton("Verificar País Restringido");
-  verificarDocumentacionButton = new QPushButton("Verificar Documentación");
-  // Forzar estilo para las etiquetas (niveles, puntos, errores, resultado)
-  QString labelEstilo = R"(
-    QLabel {
-        background-color: white;
-        background: white;
-        color: black;
-        font-size: 16px;
-        padding: 5px;
-        border-radius: 4px;
-        border: 1px solid gray;
-    }
-)";
-  nivelLabel->setStyleSheet(labelEstilo);
-  puntosLabel->setStyleSheet(labelEstilo);
-  erroresLabel->setStyleSheet(labelEstilo);
-  resultadoLabel->setStyleSheet(
-      "QLabel { background-color: white; background: white; color: black; "
-      "font-size: 18px; padding: 5px; font-weight: bold; border-radius: 4px; "
-      "border: 1px solid gray; }");
-  QString infoEstilo = R"(
-    QTextEdit {
-        background-color: white;
-        background: white;
-        color: black;
-        font-size: 14px;
-        padding: 5px;
-        border-radius: 4px;
-        border: 1px solid gray;
-    }
-)";
-  personaInfo->setStyleSheet(infoEstilo);
-
-  // Asegurar que el fondo se rellene completamente en los QLabel
-  nivelLabel->setAutoFillBackground(true);
-  puntosLabel->setAutoFillBackground(true);
-  erroresLabel->setAutoFillBackground(true);
-  resultadoLabel->setAutoFillBackground(true);
-
-  // Asegurar que el fondo se rellene completamente en el QTextEdit
-  personaInfo->setAutoFillBackground(true);
-
-  // Estilizar botones de acción
-  QString botonAccionEstilo = R"(
-    QPushButton {
-        background-color: #008CBA; /* Azul sólido */
-        color: white;
-        font-size: 16px;
-        padding: 10px;
-        border-radius: 8px;
-        border: none; /* Remover bordes por defecto */
-    }
-    QPushButton:hover {
-        background-color: #007bb5; /* Azul más oscuro en hover */
-    }
-    QPushButton:pressed {
-        background-color: #005f8a; /* Azul aún más oscuro al presionar */
-    }
-    QPushButton {
-        background: #008CBA; /* Fondo específico para evitar absorción del fondo principal */
-  personaInfo->setStyleSheet("font-size: 14px;");
+  // Style already set by global QSS, fine-tuning here if needed
 
   centerLayout->addWidget(imagenPersonaLabel);
   centerLayout->addWidget(personaInfo);
 
+  // --- BOTTOM BAR (Actions) ---
+
+  // Feedback Label
+  resultadoLabel = new QLabel("Esperando skater...");
+  resultadoLabel->setStyleSheet(
+      "font-size: 18px; color: #FF007F; font-weight: 900; background-color: "
+      "rgba(0,0,0,0.8); padding: 5px; border: 2px solid white;");
+  resultadoLabel->setAlignment(Qt::AlignCenter);
+
   // Action Buttons
   QHBoxLayout *actionLayout = new QHBoxLayout();
-  aceptarButton = new QPushButton("LET IN (Cool)");
-  rechazarButton = new QPushButton("KICK OUT (Poser)");
+  aceptarButton = new QPushButton("DEJAR PASAR");
+  rechazarButton = new QPushButton("EXPULSAR");
 
+  aceptarButton->setMinimumHeight(70);
+  rechazarButton->setMinimumHeight(70);
+
+  // Sticker Style - Green
   aceptarButton->setStyleSheet(
-      "background-color: #004400; color: #00ff00; font-size: 20px; "
-      "font-weight: bold; border: 2px solid #00ff00;");
-  rechazarButton->setStyleSheet(
-      "background-color: #440000; color: #ff0000; font-size: 20px; "
-      "font-weight: bold; border: 2px solid #ff0000;");
+      "QPushButton { "
+      "   background-color: #39FF14; "
+      "   color: black; "
+      "   font-size: 24px; "
+      "   font-weight: 900; "
+      "   border: 3px solid white; "
+      "   border-radius: 2px; "
+      "   transform: rotate(-2deg);" // Qt QSS doesn't support transform,
+                                     // simulating with irregular borders?
+                                     // standard simple button for now.
+      "}"
+      "QPushButton:hover { background-color: #32E012; border: 5px solid white; "
+      "}"
+      "QPushButton:pressed { background-color: #29B50F; border: 3px solid "
+      "black; }");
+
+  // Sticker Style - Red/Pink
+  rechazarButton->setStyleSheet("QPushButton { "
+                                "   background-color: #FF007F; "
+                                "   color: white; "
+                                "   font-size: 24px; "
+                                "   font-weight: 900; "
+                                "   border: 3px solid white; "
+                                "   border-radius: 2px; "
+                                "}"
+                                "QPushButton:hover { background-color: "
+                                "#E0006F; border: 5px solid white; }"
+                                "QPushButton:pressed { background-color: "
+                                "#B5005A; border: 3px solid black; }");
 
   actionLayout->addWidget(aceptarButton);
   actionLayout->addWidget(rechazarButton);
 
-  // Verification Buttons
+  // Verification Buttons (Smaller)
   QHBoxLayout *verifyLayout = new QHBoxLayout();
-  verificarPaisRestringidoButton = new QPushButton("CHECK CREW REP");
-  verificarDocumentacionButton = new QPushButton("CHECK ID / DOCS");
-  verRestriccionesButton = new QPushButton("VIEW DAILY ORDERS");
+  verificarPaisRestringidoButton = new QPushButton("Verificar Crew");
+  verificarDocumentacionButton = new QPushButton("Verificar DNI");
+  verRestriccionesButton = new QPushButton("Órdenes Diarias");
+
+  QString verifyStyle =
+      "QPushButton { "
+      "   background-color: #00FFFF; "
+      "   color: black; "
+      "   font-weight: bold; "
+      "   border: 2px solid black; "
+      "   padding: 10px; "
+      "}"
+      "QPushButton:hover { background-color: #E0FFFF; }"
+      "QPushButton:pressed { background-color: #008B8B; color: white; }";
+
+  verificarPaisRestringidoButton->setStyleSheet(verifyStyle);
+  verificarDocumentacionButton->setStyleSheet(verifyStyle);
+  verRestriccionesButton->setStyleSheet(verifyStyle);
 
   verifyLayout->addWidget(verificarPaisRestringidoButton);
   verifyLayout->addWidget(verificarDocumentacionButton);
   verifyLayout->addWidget(verRestriccionesButton);
 
-  resultadoLabel = new QLabel("");
-  resultadoLabel->setStyleSheet(
-      "font-size: 18px; color: #ffff00; font-weight: bold; margin-top: 10px;");
-  resultadoLabel->setAlignment(Qt::AlignCenter);
-
+  // Add all to Main Layout
   layout->addLayout(topBar);
-  layout->addLayout(centerLayout);
+  layout->addLayout(centerLayout); // Image + Info
   layout->addWidget(resultadoLabel);
-  layout->addLayout(actionLayout);
-  layout->addLayout(verifyLayout);
+  layout->addLayout(actionLayout); // Big Buttons
+  layout->addLayout(verifyLayout); // Small Buttons
+
+  // Styles are applied directly to widgets, removing old "starStyle"
+
+  // Background - Keep Image or Solid Color?
+  // Let's rely on the MainWindow background, but maybe add transparency to the
+  // widget
+  juegoWidget->setStyleSheet(
+      "QWidget#juegoWidget { background: transparent; }");
+  juegoWidget->setObjectName("juegoWidget");
 
   // Add widgets to Stack
   stackedWidget->addWidget(menuInicioWidget);
@@ -334,7 +370,35 @@ void Juego::configurarUI() {
 
   stackedWidget->setCurrentIndex(0); // Start at Menu
 
-  // Connections
+  // --- MENU STYLING ---
+  // Apply sticker style to menu buttons too
+  QString menuBtnStyle = "QPushButton { "
+                         "   background-color: #111; "
+                         "   color: #39FF14; "
+                         "   font-size: 22px; " // Larger
+                         "   font-weight: bold; "
+                         "   border: 2px solid #39FF14; "
+                         "   padding: 15px; "
+                         "   border-radius: 0px; "
+                         "}"
+                         "QPushButton:hover { "
+                         "   background-color: #39FF14; "
+                         "   color: black; "
+                         "}"
+                         "QPushButton:pressed { "
+                         "   background-color: #29B50F; "
+                         "   color: black; "
+                         "}";
+
+  jugarButton->setStyleSheet(menuBtnStyle);
+  reglasButton->setStyleSheet(menuBtnStyle);
+  cargarPartidaButton->setStyleSheet(menuBtnStyle);
+  salirButton->setStyleSheet(
+      "QPushButton { background-color: #111; color: #FF007F; font-size: 22px; "
+      "font-weight: bold; border: 2px solid #FF007F; padding: 15px; } "
+      "QPushButton:hover { background-color: #FF007F; color: white; }");
+  volverButton->setStyleSheet(menuBtnStyle);
+
   connect(jugarButton, &QPushButton::clicked, this, &Juego::iniciarJuego);
   connect(reglasButton, &QPushButton::clicked, this, &Juego::mostrarReglas);
   connect(salirButton, &QPushButton::clicked, mainWindow, &QMainWindow::close);
@@ -375,7 +439,7 @@ void Juego::configurarUI() {
 
 QString Juego::obtenerReglasDelJuego() {
   return QString(
-      "<h2>Skatetopia Rules</h2>"
+      "<h2>Reglas de Skatetopia</h2>"
       "<p>Bienvenido a <b>Skatetopia</b>, la ciudad secreta. Eres el "
       "<b>Vibe Guard</b>.</p>"
       "<p>Tu misión: Dejar pasar a los que tienen STEEZ y rechazar a "
@@ -390,7 +454,7 @@ QString Juego::obtenerReglasDelJuego() {
       "<li><b>Poser (-50):</b> Falsos. Rechazo INMEDIATO.</li>"
       "<li><b>Mall Grabber (-30):</b> Agarran la tabla por el eje. "
       "Rechazar.</li>"
-      "<li><b>Suit (-100):</b> Corporativos o Policias. GAME OVER si "
+      "<li><b>Suit (-100):</b> Corporativos o Policías. GAME OVER si "
       "entran 3.</li>"
       "</ul>"
       "<h3>Reglas de Oro (STEEZ):</h3>"
@@ -442,6 +506,9 @@ void Juego::cargarNombres() {
 
   // Cargar nombres de mujeres desde recursos
   cargarArchivoNombres(":/otros/mujerNombre.txt", nombresMujeres, "mujeres");
+
+  // Cargar apellidos
+  cargarArchivoNombres(":/otros/apellidos.txt", apellidos, "apellidos");
 }
 
 void Juego::cargarImagenes() {
@@ -571,11 +638,25 @@ void Juego::cargarPersonasNivel(int nivel) {
   std::shuffle(nombresMujeres.begin(), nombresMujeres.end(), rng);
   std::shuffle(imagenesHombres.begin(), imagenesHombres.end(), rng);
   std::shuffle(imagenesMujeres.begin(), imagenesMujeres.end(), rng);
+  // Mezclar apellidos también
+  std::shuffle(apellidos.begin(), apellidos.end(), rng);
 
   size_t nombreIndexH = 0;
   size_t nombreIndexM = 0;
+  size_t apellidoIndex = 0; // Índice para apellidos
   size_t imagenIndexH = 0;
   size_t imagenIndexM = 0;
+
+  auto getRandomSurname = [&]() -> std::string {
+    if (apellidos.empty())
+      return "";
+    std::string apellido = apellidos[apellidoIndex];
+    apellidoIndex = (apellidoIndex + 1) % apellidos.size();
+    if (apellidoIndex == 0)
+      std::shuffle(apellidos.begin(), apellidos.end(),
+                   rng); // Re-shuffle if exhausted
+    return apellido;
+  };
 
   // Distribuciones
   std::uniform_int_distribution<int> distBooleano(0, 1);
@@ -594,8 +675,12 @@ void Juego::cargarPersonasNivel(int nivel) {
                           "FILMER",       "GROM",         "SPONSEE",
                           "POSER",        "MALL GRABBER", "SUIT"};
 
-  // Pesos para los roles (simple logic: random role)
-  std::uniform_int_distribution<size_t> distRole(0, roles.size() - 1);
+  // Pesos para los roles: Favor Valid Roles
+  // Valid: LOCAL LEGEND, PRO SKATER, AMATEUR, FILMER, GROM, SPONSEE (Indices
+  // 0-5) Invalid: POSER, MALL GRABBER, SUIT (Indices 6-8)
+
+  // Chance of Valid Role: 70% (Level 1) -> Decreases slightly by level?
+  // Let's keep it simple: 70% Valid / 30% Invalid
 
   for (int i = 0; i < cantidadPersonas; ++i) {
     Persona p;
@@ -629,60 +714,80 @@ void Juego::cargarPersonasNivel(int nivel) {
     }
     p.setImagePath(imagenSeleccionada);
 
-    // Asignar atributos base
-    string crew = listaCrews[distCrew(rng)];
-    string stance = listaStances[distStance(rng)];
-    string brand = listaBrands[distBrand(rng)];
-    string style = listaSkateStyles[distStyle(rng)];
-    string goal = listaSessionGoals[distGoal(rng)];
-    string deck = listaDeckConditions[distDeck(rng)];
-    string role = roles[distRole(rng)];
+    // --- WEIGHTED ROLE GENERATION (Dynamic Difficulty) ---
+    std::string role;
+    bool isValidRole = false;
 
-    // LOGICA ESPECIFICA DE ROLES (The "STEEZ" Check)
+    // Calculate a random threshold between 50 and 70 for this specific skater
+    // This makes the difficulty feel more "organic" and less predictable than a
+    // fixed 70%
+    int validityThreshold = std::uniform_int_distribution<int>(50, 70)(rng);
+    int roll = std::uniform_int_distribution<int>(0, 100)(rng);
 
-    // 1. LOCAL LEGEND: Nunca Mongo, Marcas Core, Tabla usada
-    if (role == "LOCAL LEGEND") {
-      if (stance == "Mongo")
-        stance = "Regular";
-      // Forzar marca core (primeras 10 de la lista)
+    if (roll < validityThreshold) { // Dynamic Valid %
+      // Pick from first 6 roles (Valid)
+      std::uniform_int_distribution<size_t> distValid(0, 5);
+      role = roles[distValid(rng)];
+      isValidRole = true;
+    } else { // Remainder Invalid
+      // Pick from last 3 roles (Invalid)
+      std::uniform_int_distribution<size_t> distInvalid(6, 8);
+      role = roles[distInvalid(rng)];
+      isValidRole = false;
+    }
+    p.setRole(role);
+
+    // Asignar atributos base (SMART GENERATION)
+    string crew = listaCrews[distCrew(rng)]; // Random Crew mostly fine
+
+    string stance, brand, style, goal, deck;
+
+    if (isValidRole) {
+      // Generate mostly Valid attributes to avoid accidental bans
+      // Avoid "Mongo" (Index for standard Stance list needs checking, assuming
+      // Mongo is distinct) Hardcode safe values or retry if banned
+
+      stance = (distBooleano(rng)) ? "Regular" : "Goofy"; // Safe
+
+      // Brand: Pick from first 10 (Core brands)
       std::uniform_int_distribution<size_t> distCore(0, 9);
       brand = listaBrands[distCore(rng)];
-      if (deck == "Fresh" || deck == "Snapped")
-        deck = "Thrashed";
+
+      // Style: avoid "Mall Grab" if that's a style
+      style = "Street";
+
+      // Goal: "Filming Part" or "Session"
+      goal = "Session";
+
+      deck = "Thrashed"; // Skaters have used decks
+    } else {
+      // Invalid Role -> Make it obvious (Mall Grab, Mongo, Poser brands)
+      stance = "Mongo";
+      brand = "Zumiez"; // Example 'bad' brand
+      style = "Mall Grab";
+      goal = "Loitering";
+      deck = "Fresh"; // Posers have new decks
+
+      // Randomize slightly so not all are identical
+      if (distBooleano(rng))
+        deck = "Walmart Board";
     }
 
-    // 2. POSER / MALL GRABBER: Alta chance de Mongo, Mall Brands, Texto o Tabla
-    // Fresh
-    if (role == "POSER" || role == "MALL GRABBER") {
-      if (distBooleano(rng))
-        stance = "Mongo"; // 50% chance Mongo
-      if (distBooleano(rng)) {
-        // Forzar marca Mall (ultimas 5)
-        std::uniform_int_distribution<size_t> distMall(listaBrands.size() - 5,
-                                                       listaBrands.size() - 1);
-        brand = listaBrands[distMall(rng)];
-      }
-      if (distBooleano(rng))
-        deck = "Fresh";
+    // Override for specific Logic if needed (like Local Legend always perfect)
+    if (role == "LOCAL LEGEND") {
+      brand = "Zero"; // Example core
+      deck = "Thrashed";
+      stance = "Goofy";
     }
 
-    // 3. SUIT: Siempre viene a "Business" (no existe), usamos "Chill Session" o
-    // algo sospechoso
-    if (role == "SUIT") {
-      brand = "Generic";
-      style = "Cruiser";
-      deck = "Fresh";
-      goal = "Observation"; // Custom goal? or stuck to list? Let's stick to
-                            // list but look weird.
-      // Suits don't skate well using lists, maybe just make them look weird via
-      // Deck/Brand
-    }
+    // Logic for specific "Hard" levels can be added here later.
 
     p.setCrew(crew);
     p.setStance(stance);
     p.setBrand(brand);
     p.setSkateStyle(style);
     p.setSessionGoal(goal);
+
     p.setDeckCondition(deck);
     p.setSessionDuration(distDuration(rng));
     p.setRole(role);
@@ -714,29 +819,31 @@ void Juego::mostrarPersonaActual() {
     const Persona &p = personas[indicePersonaActual];
     verificacionesRestantes = nivelConfig.maxVerificaciones;
     int edad = calcularEdad(p.getBirthDate());
-    QString info =
-        QString("<b>Name:</b> %1\n").arg(QString::fromStdString(p.getName()));
-
-    info +=
-        QString("<b>Rol:</b> %1\n").arg(QString::fromStdString(p.getRole()));
-    info +=
-        QString("<b>Crew:</b> %1\n").arg(QString::fromStdString(p.getCrew()));
-
-    info += QString("<b>Stance:</b> %1\n")
-                .arg(QString::fromStdString(p.getStance()));
-    info +=
-        QString("<b>Brand:</b> %1\n").arg(QString::fromStdString(p.getBrand()));
-    info += QString("<b>Deck:</b> %1\n")
-                .arg(QString::fromStdString(p.getDeckCondition()));
-
-    info += QString("<b>Style:</b> %1\n")
-                .arg(QString::fromStdString(p.getSkateStyle()));
-    info += QString("<b>Goal:</b> %1\n")
-                .arg(QString::fromStdString(p.getSessionGoal()));
-
-    info += QString("<b>Edad:</b> %1\n").arg(edad);
-    info += QString("<b>Helmet:</b> %1\n").arg(p.getHasHelmet() ? "Yes" : "No");
-    info += QString("<b>Duration:</b> %1 hours\n").arg(p.getSessionDuration());
+    // Actualizar UI
+    // Keep technical terms in English (Stance, Crew, Brand)
+    // Translate labels: Name -> Nombre, Age -> Edad, Goal -> Objetivo
+    QString info = QString("<b>Nombre:</b> %1 "
+                           "<b>Role:</b> %2<br>"
+                           "<b>Crew:</b> %3 "
+                           "<b>Stance:</b> %4<br>"
+                           "<b>Brand:</b> %5 "
+                           "<b>Deck:</b> %6<br>"
+                           "<b>Style:</b> %7 "
+                           "<b>Objetivo:</b> %8<br>"
+                           "<b>Edad:</b> %9 "
+                           "<b>Casco:</b> %10<br>"
+                           "<b>Duración:</b> %11 horas")
+                       .arg(QString::fromStdString(p.getName()))
+                       .arg(QString::fromStdString(p.getRole()))
+                       .arg(QString::fromStdString(p.getCrew()))
+                       .arg(QString::fromStdString(p.getStance()))
+                       .arg(QString::fromStdString(p.getBrand()))
+                       .arg(QString::fromStdString(p.getDeckCondition()))
+                       .arg(QString::fromStdString(p.getSkateStyle()))
+                       .arg(QString::fromStdString(p.getSessionGoal()))
+                       .arg(calcularEdad(p.getBirthDate()))
+                       .arg(p.getHasHelmet() ? "Sí" : "No")
+                       .arg(p.getSessionDuration());
 
     personaInfo->setHtml(info); // Usar setHtml para formato negrita
 
@@ -810,14 +917,14 @@ int Juego::calcularEdad(const string &fechaNac) {
 void Juego::mostrarResultadoNivel() {
   if (errores <= nivelConfig.maxPosersAllowed) {
     QMessageBox::information(
-        mainWindow, "Level Finalized",
-        QString("Level %1 Complete!\nReputation: %2\nErrors: %3")
+        mainWindow, "Nivel Finalizado",
+        QString("¡Nivel %1 Completado!\nReputación: %2\nErrores: %3")
             .arg(nivelActual)
             .arg(vibeCheck.getReputation())
             .arg(errores));
     nivelActual++;
     if (nivelActual > 5) {
-      finJuego("You are a SKATE LEGEND! All levels complete.");
+      finJuego("¡Eres una LEYENDA! Todos los niveles completados.");
     } else {
       cargarConfiguracionNivel(nivelActual);
       cargarPersonasNivel(nivelActual);
@@ -827,7 +934,7 @@ void Juego::mostrarResultadoNivel() {
       mostrarPersonaActual();
     }
   } else {
-    finJuego("Level Failed. Too many posers entered.");
+    finJuego("Fallaste el nivel. Demasiados posers.");
   }
 }
 
@@ -858,112 +965,114 @@ void Juego::finJuego(const std::string &mensaje) {
   volverAlMenu();
 }
 bool Juego::evaluarDecision(const Persona &p, bool decision) {
+  lastRejectionReason.clear();
+  std::vector<std::string> reasons;
+
   // 1. Roles Absolutos
   std::string role = p.getRole();
 
-  // SUIT: Must Reject. Game Over logic handled in points (-100), but here
-  // we return if decision was correct. If Decision=Allow (True) ->
-  // Incorrect. If Decision=Deny (False) -> Correct.
   if (role == "SUIT") {
-    return !decision;
+    reasons.push_back("Es SUIT (Policía/Corp) - Rechazo Mandatorio.");
   }
 
-  // POSER / MALL GRABBER: Must Reject.
   if (role == "POSER" || role == "MALL GRABBER") {
-    return !decision;
+    reasons.push_back("Es POSER/MALL GRABBER - Se nota falso.");
   }
 
-  // LOCAL LEGEND: Must Accept (Always).
-  if (role == "LOCAL LEGEND") {
-    return decision;
-  }
-
-  // 2. Reglas del Nivel (Para AMATEUR, PRO, FILMER, GROM, SPONSEE)
-
-  bool shouldReject = false;
+  // 2. Reglas del Nivel
 
   // Check Crew / Banned Crews
   if (p.getCrew() == nivelConfig.bannedCrewStruct)
-    shouldReject = true; // mapped from nacionalidadStruct
+    reasons.push_back("Crew Prohibida (Config Struct): " + p.getCrew());
 
-  // Check against vector of banned crews
   for (const auto &banned : nivelConfig.bannedCrews) {
     if (p.getCrew() == banned)
-      shouldReject = true;
+      reasons.push_back("Crew Prohibida (Lista): " + p.getCrew());
   }
-  // Also check global banned crews list if still used, but LevelConfig bans
-  // are key.
   for (const auto &banned : bannedCrews) {
     if (p.getCrew() == banned)
-      shouldReject = true;
+      reasons.push_back("Crew en Guerra (Global): " + p.getCrew());
   }
 
   // Check Brand
   for (const auto &banned : nivelConfig.bannedBrands) {
     if (p.getBrand() == banned)
-      shouldReject = true;
+      reasons.push_back("Marca Prohibida: " + p.getBrand());
   }
   if (!nivelConfig.bannedBrandStruct.empty() &&
       p.getBrand() == nivelConfig.bannedBrandStruct)
-    shouldReject = true;
+    reasons.push_back("Marca Prohibida (Config): " + p.getBrand());
 
   // Check Stance
   for (const auto &banned : nivelConfig.bannedStances) {
     if (p.getStance() == banned)
-      shouldReject = true;
+      reasons.push_back("Stance Prohibido: " + p.getStance());
   }
 
   // Check Style
   for (const auto &banned : nivelConfig.bannedStyles) {
     if (p.getSkateStyle() == banned)
-      shouldReject = true;
+      reasons.push_back("Estilo Prohibido: " + p.getSkateStyle());
   }
 
   // Check Deck Condition
   for (const auto &banned : nivelConfig.bannedDeckConditions) {
     if (p.getDeckCondition() == banned)
-      shouldReject = true;
+      reasons.push_back("Tabla Prohibida: " + p.getDeckCondition());
   }
 
   // Check Role
   for (const auto &banned : nivelConfig.bannedRoles) {
     if (p.getRole() == banned)
-      shouldReject = true;
+      reasons.push_back("Rol Prohibido en este nivel: " + p.getRole());
   }
 
   // Check Goal
   for (const auto &banned : nivelConfig.bannedGoals) {
     if (p.getSessionGoal() == banned)
-      shouldReject = true;
+      reasons.push_back("Objetivo Prohibido: " + p.getSessionGoal());
   }
 
   // Check Duration
   if (nivelConfig.duracionMaximaEstancia > 0 &&
       p.getSessionDuration() > nivelConfig.duracionMaximaEstancia)
-    shouldReject = true;
+    reasons.push_back("Excede duración máxima: " +
+                      std::to_string(p.getSessionDuration()) + "h");
 
-  // Check Documentation (Siempre requerida valida salvo para leyendas que
-  // ya pasaron)
+  // Check Documentation
   if (!p.getHasValidID())
-    shouldReject = true;
+    reasons.push_back("Documentación Inválida/Falsa.");
 
-  // Check Age (Min/Max?)
-  // Let's assume nivelConfig.edad is a "Min Age for Solo Session"
+  // Check Age
   if (nivelConfig.edad > 0 &&
       calcularEdad(p.getBirthDate()) < nivelConfig.edad) {
-    // Skater kids usually skate together or with parents.
-    // Let's say if Age < ConfigAge (e.g. 16) and NO HELMET -> Reject.
     if (!p.getHasHelmet())
-      shouldReject = true;
+      reasons.push_back("Menor de edad sin casco.");
   }
 
-  // 3. Resultado Final
-  // If shouldReject is true, Correct Decision is False (Deny).
-  // If shouldReject is false, Correct Decision is True (Allow).
+  // LOGIC DECISION
+  // shouldReject is true if ANY reason exists (except for Local Legend override
+  // below)
+  bool shouldReject = !reasons.empty();
+
+  // LOCAL LEGEND Override: Always Allowed unless game over condition?
+  // Specs say "Local Legend: Kings... NEVER reject".
+  if (role == "LOCAL LEGEND") {
+    shouldReject = false;
+    reasons.clear(); // Clear reasons because Legend passes anyway.
+  }
 
   if (shouldReject) {
+    // Build debug string
+    for (const auto &r : reasons) {
+      lastRejectionReason += QString::fromStdString(r) + "\n";
+    }
+    // Correct action is to Deny (False).
+    // If decision is Allow (True) -> Returns False (Incorrect)
     return !decision;
   } else {
+    // Correct action is to Allow (True).
+    // If decision is Allow (True) -> Returns True (Correct)
     return decision;
   }
 }
@@ -974,27 +1083,30 @@ void Juego::aceptarPersona() {
     bool decisionCorrecta = evaluarDecision(p, true);
 
     if (decisionCorrecta) {
-      vibeCheck.increaseReputation(puntosPorTipo[p.getRole()]);
-      resultadoLabel->setText("¡Aceptado! Keep rollin'.");
+      vibeCheck.increaseReputation(10);
+      resultadoLabel->setText("¡Bienvenido! +Reputación");
       sonidoCorrecto.play();
       logger.log(QString("Aceptar: %1 (%2). Correcto.")
                      .arg(QString::fromStdString(p.getName()))
                      .arg(QString::fromStdString(p.getRole())));
     } else {
-      // Pena por error
-      int pena = -10; // Default penalty
-      if (p.getRole() == "SUIT")
-        pena = -100;
-      if (p.getRole() == "POSER")
-        pena = -50;
-
-      vibeCheck.increaseReputation(pena);
+      vibeCheck.increaseReputation(-20);
       errores++;
-      resultadoLabel->setText("¡Error! Debiste rechazar.");
+
+      // Mostrar por que NO debiste aceptarlo
+      if (!lastRejectionReason.isEmpty()) {
+        resultadoLabel->setText("¡ERROR! Debiste rechazarlo por:\n" +
+                                lastRejectionReason);
+      } else {
+        resultadoLabel->setText("¡Error! Debiste rechazarlo.");
+      }
+
       sonidoError.play();
-      logger.log(QString("Aceptar: %1 (%2). Incorrecto.")
-                     .arg(QString::fromStdString(p.getName()))
-                     .arg(QString::fromStdString(p.getRole())));
+      logger.log(
+          QString("Aceptar: %1 (%2). Incorrecto. Debio ser rechazado por: %3")
+              .arg(QString::fromStdString(p.getName()))
+              .arg(QString::fromStdString(p.getRole()))
+              .arg(lastRejectionReason));
     }
 
     puntosLabel->setText("Reputación: " +
@@ -1027,7 +1139,6 @@ void Juego::aceptarPersona() {
         mostrarRestricciones();
       }
     }
-
     mostrarPersonaActual();
   }
 }
@@ -1054,11 +1165,17 @@ void Juego::rechazarPersona() {
       // Rechazaste a alguien que debia entrar (ej. Legend)
       vibeCheck.increaseReputation(-20);
       errores++;
-      resultadoLabel->setText("¡Error! Ese era real. Debiste aceptar.");
+      if (!lastRejectionReason.isEmpty()) {
+        resultadoLabel->setText("¡Incorrecto! Razones ocultas:\n" +
+                                lastRejectionReason);
+      } else {
+        resultadoLabel->setText("¡Error! Ese era real. Debiste aceptar.");
+      }
       sonidoError.play();
-      logger.log(QString("Rechazar: %1 (%2). Incorrecto.")
+      logger.log(QString("Rechazar: %1 (%2). Incorrecto. Razon: %3")
                      .arg(QString::fromStdString(p.getName()))
-                     .arg(QString::fromStdString(p.getRole())));
+                     .arg(QString::fromStdString(p.getRole()))
+                     .arg(lastRejectionReason));
     }
 
     puntosLabel->setText("Reputación: " +
@@ -1068,7 +1185,7 @@ void Juego::rechazarPersona() {
     indicePersonaActual++;
     personasProcesadasNivel++;
 
-    if (errores >= nivelConfig.maxFallosPermitidos) {
+    if (errores >= nivelConfig.maxPosersAllowed) {
       finJuego("Demasiados errores. Tu reputación cayó. Fin del juego.");
       return;
     }
@@ -1135,10 +1252,10 @@ void Juego::verificarDocumentacion() {
     verificacionesRestantes--;
 
     if (p.getHasValidID()) {
-      resultadoLabel->setText("ID Check: VALID (Vibe passed).");
+      resultadoLabel->setText("DNI: VÁLIDO (Todo en orden).");
       logger.log("Verificación: Valid ID.");
     } else {
-      resultadoLabel->setText("ID Check: FAKE / EXPIRED (Poser).");
+      resultadoLabel->setText("DNI: FALSO / INVALIDO.");
       logger.log("Verificación: Invalid ID.");
     }
   } else {
